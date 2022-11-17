@@ -1,0 +1,107 @@
+- alias: Alles aus wenn Wohnung leer
+  trigger:
+    - platform: state
+      entity_id: person.manuel
+      to: 'not_home'
+      for:
+        minutes: 5
+
+  action:
+    - service: mqtt.publish
+      data:
+        topic: zigbee2mqtt/all_lights/set
+        payload: "{\"state\": \"OFF\"}"
+    - service: light.turn_off
+      entity_id: all
+    
+- alias: Notification Not Home
+  trigger:
+    - platform: state
+      entity_id: zone.home
+      to: '0'
+      id: empty
+      for:
+        minutes: 15
+  action:
+        - service: alarm_control_panel.alarm_arm_away
+          data: {}
+          target:
+            entity_id: alarm_control_panel.alarm
+        - service: notify.mobile_app_iphone_xs
+          data:
+            title: "Nicht mehr Zuhause"
+            message: "Was soll ich erledigen?"
+            data:
+              push:
+                sound: "Alert_Health_Haptic.caf"
+                badge: 0
+                category: "nothome"
+              action_data:
+                          entity_id: light.test
+                          my_custom_data: foo_bar
+
+- alias: Back Home
+  trigger:
+    - platform: state
+      entity_id: zone.home
+      from: '0'
+  action:
+        - service: alarm_control_panel.alarm_disarm
+          data:
+            code: "5412"
+          target:
+            entity_id: alarm_control_panel.alarm
+
+- alias: turn off all devices 
+  trigger:
+    platform: event
+    event_type: ios.notification_action_fired
+    event_data:
+      actionName: ALL_DEVICES
+  action:
+   - service: mqtt.publish
+     data:
+       topic: zigbee2mqtt/all_lights/set
+       payload: "{\"state\": \"OFF\"}"
+   - data:
+       entity_id: media_player.bravia_kdl_42_w8145b
+     service: homeassistant.turn_off
+   - data:
+       entity_id: light.klo_lampe
+     service: homeassistant.turn_off
+   - data:
+       entity_id: switch.licht_speis
+     service: homeassistant.turn_off
+   - data:
+       entity_id: light.bad_hue_bloom
+     service: homeassistant.turn_off
+   - data:
+       entity_id: light.bad_deckenlampe
+     service: homeassistant.turn_off
+   - data:
+       entity_id: light.spiegel_licht
+     service: homeassistant.turn_off
+   - data:
+       entity_id: light.eingang
+     service: homeassistant.turn_off
+   - data:
+       entity_id: switch.fibaro_system_fgs222_double_relay_switch_2x1_5kw_switch_4
+     service: homeassistant.turn_off
+   - data:
+       entity_id: light.kuchenlampe
+     service: homeassistant.turn_off
+   - data:
+       entity_id: light.schlafzimmer_licht
+     service: homeassistant.turn_off
+   - data:
+       entity_id: light.dach_hue_go
+     service: homeassistant.turn_off
+   #- data:
+   #    entity_id: switch.tv_beleuchtung
+   #  service: homeassistant.turn_off
+   - data:
+       entity_id: light.stiegen_led
+     service: homeassistant.turn_off
+   - data:
+       entity_id: all
+     service: light.turn_off

@@ -1,0 +1,570 @@
+homeassistant:
+  customize: !include customize.yaml
+  allowlist_external_dirs:
+    - /share
+    - /config
+
+my:
+energy:
+zone:
+backup:
+usb:
+bluetooth:
+sun:
+mobile_app:
+config:
+counter:
+history:
+image:
+dhcp:
+input_boolean:
+input_number:
+input_text:
+media_source:
+person:
+ssdp:
+system_health:
+timer:
+wake_on_lan:
+diagnostics:
+zeroconf:
+network:
+ios:
+ffmpeg:
+python_script:
+panel_iframe:
+input_button:
+schedule:
+alarm_control_panel:
+  - platform: manual
+    name: Alarm
+    delay_time: 20
+    arming_time: 10
+    code: 5412
+    code_arm_required: false
+
+logger:
+  default: info
+  logs:
+    homeassistant.helpers.template: critical
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - ::1
+
+utility_meter:
+  monthly_energy_ikb:
+    source: sensor.power_usage_yesterday_current
+    cycle: monthly
+  hourly_energy_ikb:
+    source: sensor.power_usage_yesterday_current
+    cycle: hourly
+  taglich_energy:
+    source: sensor.energy_total
+    cycle: daily
+  hourly_energy:
+    source: sensor.energy_total
+    cycle: hourly
+
+template:
+  - sensor:
+    - name: Watch Complication Header 1
+      state: "on"
+      attributes:
+        text: |
+          {%- if states('alarm_control_panel.alarm') != "disarmed" -%}🔔{%endif%}{%- if states('alarm_control_panel.alarm') == "triggered" -%}🚨{%endif%}{%- if states('person.rebekka') == "home" -%}🙋🏻‍♀️ {%- endif -%}{% if (states.climate | selectattr("state", "eq", "heat") |list |count)>0 %} ♨️{%endif %}{% set lights = (states.light | selectattr('attributes.type', 'undefined') | selectattr('state', 'equalto', 'on')| rejectattr('attributes.friendly_name', 'equalto', 'all_lights') | rejectattr('attributes.friendly_name', 'equalto', 'lightautomations')  | list | count ) %}{% if lights > 0 %}💡{{lights}}{%endif%} 🌡️{{ states('sensor.temperature_avg') | round }}° {%- set windows = states.binary_sensor | selectattr('state', 'equalto', 'on') | selectattr('attributes.device_class', 'defined') | selectattr('attributes.device_class', 'equalto', 'door') | list | count -%}{% if windows > 0 %} 🪟 {{ windows }}{% endif %}    
+    - name: Watch Complication Body 1
+      state: "on"
+      attributes:
+        text: |
+          {% if (states('group.light_automations')) == "on" %} 👁️ {%endif%}{% if (states('input_boolean.kinomodus')) == "on" %} 🎬 {%endif%}{% if states('binary_sensor.luftdruck') == "on" %}📈{%else%}📉{%endif%}{%- set vpndevices = namespace(entities=[]) -%}{%- for device in states.device_tracker -%}{%- if(device.attributes | length) == 2 -%}{%- if(device.state == "home") -%}{%- set vpndevices.entities = vpndevices.entities + [device.entity_id] -%}{% endif %}{% endif %}{%- endfor -%}{%- set vpndevices = vpndevices.entities | count -%}{% if vpndevices > 0 %} 📡 {{vpndevices}}{%endif%}{% set batteries = states.sensor | selectattr('entity_id', 'search', 'battery') 
+                  | rejectattr('state', 'eq', 'unknown')
+                  | rejectattr('state', 'eq', '100') 
+                  | rejectattr('state', 'eq', '100.0') 
+                  | rejectattr('object_id', 'match', 'renault') 
+                  | selectattr('state', 'lt', '30') 
+                  | list | count %}{% if batteries > 0 %} 🪫{{batteries}}{%endif%}{% set lightnings = states('sensor.blitzortung_lightning_counter') | int(0) %}{% if lightnings > 0 %} 🌩️ {{lightnings}}{%endif%}{% if (states('proximity.home') | int(0)) > 0 %} 📍 {{states('proximity.home')}} km{%endif%}{% if states('binary_sensor.docker_hub_update_available') == "on" %}🔄{% endif %}
+                  
+    - name: Watch Complication Body 2
+      state: "on"
+      attributes:
+        text: |
+          ⚡️{{ states('sensor.taglich_energy') | float(0) | round(2) }} kWh  💶 {{ states('sensor.strom_netto') | float(0) | round(2) }} €
+    
+    - name: "Power Total"
+      unique_id: power_total
+      state: >-
+        {{ (states('sensor.shellyem3_c8c9a3705569_channel_a_power')|float(0) + 
+            states('sensor.shellyem3_c8c9a3705569_channel_b_power')|float(0) + 
+            states('sensor.shellyem3_c8c9a3705569_channel_c_power')|float(0)) }}
+      unit_of_measurement: W
+      device_class: power
+      state_class: measurement
+    - name: "Energy Total"
+      unique_id: energy_total
+      state: >-
+        {%- set power = (states('sensor.shellyem3_c8c9a3705569_channel_a_energy')|float(0) + 
+            states('sensor.shellyem3_c8c9a3705569_channel_b_energy')|float(0) + 
+            states('sensor.shellyem3_c8c9a3705569_channel_c_energy')|float(0)) 
+        -%}
+        {%- if power > 4000 -%}
+        0
+        {%- else -%}
+          {{ power }}
+        {%- endif -%}
+      unit_of_measurement: kWh
+      device_class: power_factor
+      state_class: measurement
+
+
+cover:
+  - platform: template
+    covers:
+      wohnzimmer_curtain_left:
+        device_class: curtain
+        friendly_name: "Wohnzimmer Vorhang Links"
+        position_template: "{{ state_attr('cover.ble_switchbot_1', 'current_position') }}"
+        open_cover:
+          service: script.open_curtain_left
+        close_cover:
+          service: script.close_curtain_left
+  - platform: template
+    covers:
+      wohnzimmer_curtain_right:
+        device_class: curtain
+        friendly_name: "Wohnzimmer Vorhang Rechts"
+        position_template: "{{ state_attr('cover.ble_switchbot_4', 'current_position') }}"
+        open_cover:
+          service: script.open_curtain_right
+        close_cover:
+          service: script.close_curtain_right
+
+weather:
+
+binary_sensor:
+  - platform: trend
+    sensors:
+      heizung_keller:
+        entity_id: sensor.heizung_vorlauf
+        max_samples: 20
+
+  - platform: trend
+    sensors:
+      luftdruck:
+        entity_id: sensor.netatmo_innsbruck_innen_pressure
+        sample_duration: 7200
+        max_samples: 120
+
+  - platform: meteoalarm
+    country: "austria"
+    province: "tirol"
+
+  - platform: template
+    sensors:
+      tuerklingel:
+        friendly_name: "Türklingel"
+        device_class: occupancy
+        value_template: "{{ is_state('switch.binary_power_switch_instance_2_switch', 'on') }}"
+
+climate:
+  - platform: generic_thermostat
+    name: Office
+    heater: switch.office_heizung
+    target_sensor: sensor.office_sensor_temperature
+    cold_tolerance: 0.5
+    hot_tolerance: 2.0
+    keep_alive:
+      minutes: 2
+
+  - platform: generic_thermostat
+    name: Bad
+    heater: switch.bad_heizung
+    target_sensor: sensor.bad_sensor_temperature
+    cold_tolerance: 0.5
+    hot_tolerance: 2.0
+    keep_alive:
+      minutes: 2
+
+  - platform: generic_thermostat
+    name: Wohnzimmer
+    heater: switch.wohnzimmer_1_heizung
+    target_sensor: sensor.wohnzimmer_sensor_avg
+    cold_tolerance: 0.5
+    hot_tolerance: 2.0
+    keep_alive:
+      minutes: 2
+
+  - platform: generic_thermostat
+    name: Kueche
+    heater: switch.kueche_heizung
+    target_sensor: sensor.kuche_sensor_temperature
+    cold_tolerance: 0.5
+    hot_tolerance: 2.0
+    keep_alive:
+      minutes: 2
+
+  - platform: generic_thermostat
+    name: Schlafzimmer
+    heater: switch.schlafzimmer_heizung
+    target_sensor: sensor.schlafzimmer_sensor_temperature
+    cold_tolerance: 0.5
+    hot_tolerance: 2.0
+    keep_alive:
+      minutes: 2
+
+adaptive_lighting:
+  - name: "default"
+    lights:
+      - light.eingang
+      - light.hue_play_gradient_lightstrip_1
+      - light.hue_play_gradient_lightstrip_2
+      - light.hue_color_lamp_1
+      - light.schlafzimmer_licht
+    prefer_rgb_color: false
+    transition: 15
+    initial_transition: 1
+    interval: 90
+    min_brightness: 5
+    max_brightness: 90
+    sleep_brightness: 5
+    take_over_control: true
+    detect_non_ha_changes: false
+    only_once: False
+
+  - name: "ikea"
+    lights:
+      - light.couch
+      - light.kuchenlampe
+      - light.office_lampe_level_light_color_on_off
+    prefer_rgb_color: true
+    transition: 15
+    initial_transition: 1
+    interval: 90
+    min_brightness: 5
+    max_brightness: 90
+    min_color_temp: 2800
+    max_color_temp: 5000
+    sleep_brightness: 5
+    take_over_control: true
+    detect_non_ha_changes: false
+    only_once: false
+
+input_datetime:
+  pipe_lamp_on:
+    name: Lampe 1 Einschalten
+    has_date: false
+    has_time: true
+  pipe_lamp_off:
+    name: Lampe 1 Ausschalten
+    has_date: false
+    has_time: true
+  pipe_lamp2_on:
+    name: Lampe 2 Einschalten
+    has_date: false
+    has_time: true
+  pipe_lamp2_off:
+    name: Lampe 2 Ausschalten
+    has_date: false
+    has_time: true
+
+input_select:
+  abluft:
+    name: Abluft Ventilator
+    options:
+      - Stufe 1
+      - Stufe 2
+      - Stufe 3
+    initial: Stufe 1
+    icon: mdi:fan
+
+logbook:
+  exclude:
+    entity_globs:
+      - switch.julia_*
+      - sensor.julia_*
+      - device_tracker.julia_*
+      - person.julia_*
+
+recorder:
+  db_url: !secret mysqldb
+  purge_keep_days: 60
+  exclude:
+    domains:
+      - moon
+      - sun
+    entities:
+      - sensor.date
+      - sensor.time
+      - sensor.date_time
+      - sensor.date_time_iso
+      - sensor.time_date
+      - sensor.time_utc
+      - sensor.ha_last_restart
+      - sensor.appdaemon_last_restart
+      - sun.sun
+
+    entity_globs:
+      - switch.julia_*
+      - sensor.julia_*
+
+influxdb:
+  host: !secret influxdbhost
+  port: !secret influxdbport
+  database: !secret influxdbdatabase
+  username: !secret influxdbusername
+  password: !secret influxdbpassword
+  max_retries: 10
+  default_measurement: state
+  exclude:
+
+    entity_globs:
+      - switch.julia_*
+      - sensor.julia_*
+      - device_tracker.julia_*
+
+proximity:
+  home:
+    devices:
+      - device_tracker.iphone_xs
+    tolerance: 50
+    unit_of_measurement: km
+
+sensor: !include sensors.yaml
+
+image_processing:
+  - platform: deepstack_object
+    ip_address: !secret deepstackhost
+    port: 5000
+    api_key: !secret deepstackpassword
+    save_file_folder: /config/www/snapshots/
+    save_file_format: jpg
+    save_timestamped_file: True
+    always_save_latest_file: True
+    scale: 0.75
+    roi_x_max: 1
+    roi_y_max: 1
+    targets:
+      - target: person
+        confidence: 60
+    source:
+      - entity_id: camera.eingang_rtsp
+
+telegram_bot:
+  - platform: polling
+    api_key: !secret telegramkey
+    allowed_chat_ids:
+      - !secret telegramchannel
+
+device_tracker:
+  - platform: luci
+    host: !secret openwrthost1
+    username: !secret openwrtusername
+    password: !secret openwrtpassword
+    new_device_defaults:
+      track_new_devices: true
+  - platform: luci
+    host: !secret openwrthost2
+    username: !secret openwrtusername
+    password: !secret openwrtpassword
+    new_device_defaults:
+      track_new_devices: true
+  - platform: luci
+    host: !secret openwrthost3
+    username: !secret openwrtusername
+    password: !secret openwrtpassword
+    new_device_defaults:
+      track_new_devices: true
+
+  - platform: ping
+    hosts:
+      imstptp: !secret ping_imst_ptp
+      julia_raspberry: !secret ping_julia_raspberry
+      julia_bananapi: !secret ping_julia_bananapi
+      hansjoerg_ipad: !secret ping_hansjoerg_ipad
+      hansjoerg_laptop: !secret ping_hansjoerg_laptop 
+      iphone_11: !secret ping_iphone_11
+      hubsi: !secret ping_hubsi
+      rebekka: !secret ping_rebekka
+      rebekka_ipad: !secret ping_rebekka_ipad
+      oracle: !secret ping_oracle1
+      oracle2: !secret ping_oracle2
+
+tts:
+  - platform: google_translate
+    cache: true
+    cache_dir: /tmp/tts
+    time_memory: 300
+    service_name: google_say
+    language: "de"
+
+homekit: !include homekit.yaml
+
+notify:
+  - platform: html5
+    name: html5
+    vapid_pub_key: !secret vapid_pub_key
+    vapid_prv_key: !secret vapid_prv_key
+    vapid_email: !secret vapid_email
+  - platform: telegram
+    name:  !secret telegramname
+    chat_id:  !secret telegramchatid
+
+media_player:
+  - platform: media_player_template
+    media_players:
+      playstation_5:
+        device_class: tv
+        unique_id: media.player.playstation_5
+        current_source_template: "{{ states('sensor.ps5_title') }}"
+        friendly_name: "Playstation 5"
+        media_image_url_template: |
+          {% if states('sensor.ps5_activity') == "playing" %}{{ state_attr('sensor.ps5_activity', 'title_image') }}{% else %}<url to a static image to display when at idle>{% endif %}
+        turn_off:
+            data_template:
+              entity_id: switch.ps5_power
+            service: switch.turn_off
+        turn_on:
+            data_template:
+              entity_id: switch.ps5_power
+            service: switch.turn_on
+        value_template: "{{ states('switch.ps5_power') }}"
+
+stream:
+  ll_hls: true
+  part_duration: 0.75
+  segment_duration: 6
+
+camera:
+  - platform: local_file
+    file_path: /config/www/snapshots/deepstack_object_eingang_rtsp_latest.jpg
+    name: deepstack_latest_person
+  - platform: xiaomi_cloud_map_extractor
+    host: !secret xiaomihost
+    token: !secret xiaomitoken
+    username: !secret xiaomiusername
+    password: !secret xiaomipassword
+    country: "de"
+    scan_interval: 15
+    colors:
+      color_path: [255, 255, 255]
+    draw:
+      - charger
+      - path
+      - goto_path
+      - predicted_path
+      - no_go_zones
+      - no_mopping_zones
+      - vacuum_position
+      - virtual_walls
+    map_transformation:
+      scale: 2
+      rotate: 0
+      trim:
+        top: 56
+        bottom: 18
+        left: 20
+        right: 23
+    attributes:
+      - calibration_points
+      - charger
+      - goto
+      - goto_path
+      - goto_predicted_path
+      - image
+      - obstacles
+      - vacuum_position
+      - walls
+      - zones
+
+mqtt:
+  switch:
+    - command_topic: "pi/GPIO/control/18"
+      name: Wohnzimmer 1 Heizung
+      payload_on: "0"
+      payload_off: "1"
+      retain: true 
+    - command_topic: "pi/GPIO/control/17"
+      name: Wohnzimmer 2 Heizung
+      payload_on: "0"
+      payload_off: "1"
+      retain: true
+    - command_topic: "pi/GPIO/control/2"
+      name: Kueche Heizung
+      payload_on: "0"
+      payload_off: "1"
+      retain: true
+    - command_topic: "pi/GPIO/control/2"
+      name: Kueche Heizung
+      payload_on: "0"
+      payload_off: "1"
+      retain: true
+    - command_topic: "pi/GPIO/control/3"
+      name: Office Heizung
+      payload_on: "0"
+      payload_off: "1"
+      retain: true
+    - command_topic: "pi/GPIO/control/27"
+      name: Bad Heizung
+      payload_on: "0"
+      payload_off: "1"
+      retain: true
+    - command_topic: "pi/GPIO/control/22"
+      name: Schlafzimmer Heizung
+      payload_on: "0"
+      payload_off: "1"
+      retain: true
+  sensor:
+    - state_topic: "speedtest/download"
+      name: "mqtt speedtest download"
+      unit_of_measurement: "mbit/s"
+    - state_topic: "speedtest/upload"
+      name: "mqtt speedtest upload"
+      unit_of_measurement: "mbit/s"
+    - state_topic: "speedtest/ping"
+      name: "mqtt speedtest ping"
+      unit_of_measurement: "ms"
+    - state_topic: "pi/oralb/state"
+      name: "Oral B"
+    - state_topic: "pi/oralb/battery"
+      name: "Oral B Battery"
+      unit_of_measurement: "%"
+    - state_topic: "pi/oralb/mode"
+      name: "Oral B Mode"
+    - state_topic: "pi/oralb/pressure"
+      name: "Oral B Pressure"
+    - state_topic: "pi/oralb/time"
+      name: "Oral B Time"
+    - state_topic: "pi/heating/vorlauf"
+      name: "Heizung Vorlauf"
+      unit_of_measurement: "°C"
+    - state_topic: "pi/heating/cpu"
+      name: "HostTemperature_HeatingPi"
+      unit_of_measurement: "°C"
+
+shell_command:
+  restart_hyperion: !secret restart_hyperion
+  ban_ip: !secret ban_ip
+  unban_ip: !secret unban_ip
+  speak: !secret speak
+  huesyncoff: !secret huesyncoff
+  klingel_ausloeser: !secret klingel_ausloeser
+  wifilistupdate: !secret wifilistupdate
+  wifi_kick_client: !secret wifi_kick_client
+  wifi_add_client: !secret wifi_add_client
+  refresh_wifi: !secret refresh_wifi
+  motion_ausloeser: !secret motion_ausloeser
+  dontdonothing: !secret dontdonothing
+
+frontend:
+  themes: !include_dir_merge_named themes
+  extra_module_url:
+    - /local/custom.js
+
+switch: !include switches.yaml
+light: !include lights.yaml
+group: !include groups.yaml
+automation: !include automations.yaml
+automation manual: !include_dir_merge_list automation/
+script: !include scripts.yaml
+scene: !include scenes.yaml

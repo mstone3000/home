@@ -1,0 +1,494 @@
+- platform: statistics
+  name: Luftdruck
+  state_characteristic: mean
+  entity_id: sensor.netatmo_innsbruck_innen_pressure
+  sampling_size: 65000
+  max_age:
+    days: 7
+
+- platform: rest
+  name: Grocery List
+  headers:
+    authorization: !secret grocerybearer
+    content-type: 'application/json'
+  resource: http://127.0.0.1:8123/api/shopping_list
+  value_template: "{{ value_json | map(attribute='name') | list | join(', ') }}"
+  method: GET
+  scan_interval: 60
+
+- platform: template
+  sensors:
+    luftdruck_max:
+      value_template: "{{ state_attr('sensor.luftdruck', 'max_value') }}"
+    luftdruck_min:
+      value_template: "{{ state_attr('sensor.luftdruck', 'min_value') }}"
+
+- platform: darksky
+  api_key: !secret darkskyapikey
+  forecast:
+    - 0
+    - 1
+  hourly_forecast:
+    - 0
+    - 1
+  language: de
+  monitored_conditions:
+    - summary
+    - temperature
+    - precip_type
+    - precip_intensity
+    - precip_probability
+- platform: time_date
+  display_options:
+    - "time"
+    - "date"
+    - "date_time"
+    - "date_time_iso"
+    - "time_date"
+    - "time_utc"
+- platform: command_line
+  name: CPU Temp
+  command: "/bin/cat /sys/class/thermal/thermal_zone0/temp"
+  unit_of_measurement: "ºC"
+  value_template: "{{ value | multiply(0.001) }}"
+
+- platform: systemmonitor
+  resources:
+    - type: disk_use_percent
+      arg: /
+    - type: last_boot
+    - type: memory_free
+    - type: memory_use_percent
+    - type: processor_use
+
+- platform: systemmonitor
+  resources:
+    - type: disk_use_percent
+      arg: /share/NAS
+
+- platform: template
+  sensors:
+    strom_netto:
+      unit_of_measurement: "€"
+      value_template: >
+        {{ "%.2f"|format(states("sensor.taglich_energy") | float(0) * states("input_number.strompreistotal") | float(0))}}
+
+- platform: template
+  sensors:
+    strom_netto_decimalreduced:
+      unit_of_measurement: "kWh"
+      value_template: >
+        {{ "%.1f"|format(states("sensor.taglich_energy") | float(0))}}
+
+- platform: template
+  sensors:
+    stromverbrauch:
+      unit_of_measurement: "W"
+      value_template: >
+        {% set power = ((states('sensor.binary_power_switch_power') | float(0)) + 
+        (states('sensor.fgwpe_f_wall_plug_gen5_power') | float(0)) + 
+        (states('sensor.fgwpe_f_wall_plug_gen5_electric_w_3') | float(0)) + 
+        (states('sensor.fgwpe_f_wall_plug_gen5_power_2') | float(0)) + 
+        (states('sensor.binary_power_switch_instance_1_electric_w') | float(0)) + 
+        (states('sensor.shelly_stromkasten_channel_1_power') | float(0)) + 
+        (states('sensor.shelly_stromkasten_channel_2_power') | float(0)) + 
+        10.0) | float(0) %}
+        {% if is_number(power) %}
+        {{ power }}
+        {% else %}
+        0.0
+        {% endif %}
+
+- platform: template
+  sensors:
+    temperature_avg:
+      unit_of_measurement: "°C"
+      value_template: >
+        {% set temp = ((states('sensor.office_sensor_temperature') | float(0)) + 
+        (states('sensor.bad_sensor_temperature') | float(0)) + 
+        (states('sensor.wohnzimmer_sensor_avg') | float(0)) + 
+        (states('sensor.kuche_sensor_temperature') | float(0)) + 
+        (states('sensor.schlafzimmer_sensor_temperature') | float(0))) / 5 %}
+        {% if is_number(temp) %}
+        {{ temp | round(2) }}
+        {% else %}
+        20.0
+        {% endif %}
+
+- platform: statistics
+  name: stromverbrauch_stats
+  state_characteristic: mean
+  entity_id: sensor.stromverbrauch
+  sampling_size: 50
+  precision: 0
+
+- platform: statistics
+  name: home_pressure
+  state_characteristic: mean
+  entity_id: sensor.netatmo_innsbruck_innen_pressure
+  precision: 1
+  sampling_size: 20
+
+- platform: statistics
+  name: home_co2
+  state_characteristic: mean
+  entity_id: sensor.weather_station_co2
+  precision: 0
+  sampling_size: 20
+
+- platform: template
+  sensors:
+    stromverbrauch_median:
+      unit_of_measurement: "W"
+      value_template: "{{ state_attr('sensor.stromverbrauch_stats', 'mean') }}"
+
+- platform: template
+  sensors:
+    strom_median_filtered:
+      unit_of_measurement: "W" # and this
+      value_template: >
+        {% if is_state('sensor.stromverbrauch_stats', 'unknown') %}
+          0
+        {% else %}
+          {{ state_attr('sensor.stromverbrauch_stats', 'mean') }}
+        {% endif %}
+
+- platform: min_max
+  name: wohnzimmer_sensor_avg
+  type: mean
+  entity_ids:
+    - sensor.wohnzimmer_sensor_temperature
+    - sensor.netatmo_innsbruck_innen_temperature
+    - sensor.eingang_sensor_temperature
+
+- platform: template
+  sensors:
+    vacuum_cleaner_error_sensor:
+      friendly_name: Vacuum Cleaner Error Sensor
+      value_template: >-
+        {% if states.vacuum.s6_maxv.attributes.error is defined %}
+          {{states.vacuum.s6_maxv.attributes.error}}
+        {% else %}
+          No Error
+        {% endif %}
+
+    network_devices:
+      unit_of_measurement: "Geräte"
+      # total devices, luci devices -2 bridges in APs
+      value_template: >-
+        {% set total = states.device_tracker
+                      | selectattr('state', 'eq', 'home')
+                      | selectattr('attributes.type', 'defined')
+                      | list | count %}
+        {{ total }}
+
+    fritzbox_upload:
+      value_template: >
+        {% set rate = states('sensor.fritz_box_5490_kb_s_sent')|int(0) %}
+        {% if rate < 0 %}
+          0
+        {% else %}
+          {{ rate | round  }}
+        {% endif %}
+      unit_of_measurement: "kB/s"
+    fritzbox_download:
+      value_template: >
+        {% set rate = states('sensor.fritz_box_5490_kb_s_received')|int(0) %}
+        {% if rate < 0 %}
+          0
+        {% else %}
+          {{ rate | round  }}
+        {% endif %}
+      unit_of_measurement: "kB/s"
+    fritzbox_total:
+      value_template: "{{ float(states('sensor.fritzbox_download')) + float(states('sensor.fritzbox_upload')) | round(2) }}"
+      unit_of_measurement: "kB/s"
+    fritzbox_upload_total:
+      value_template: >
+        {% set rate = states('sensor.fritz_box_5490_gb_sent')|int(0) %}
+        {% if rate < 0 %}
+          0
+        {% else %}
+          {{ rate | round  }}
+        {% endif %}
+      unit_of_measurement: "GB"
+    fritzbox_download_total:
+      value_template: >
+        {% set rate = states('sensor.fritz_box_5490_gb_received')|int(0) %}
+        {% if rate < 0 %}
+          0
+        {% else %}
+          {{ rate | round  }}
+        {% endif %}
+      unit_of_measurement: "GB"
+    fritzbox_bandwidth_total:
+      value_template: "{{ float(states('sensor.fritzbox_download_total')) + float(states('sensor.fritzbox_upload_total')) | round(2) }}"
+      unit_of_measurement: "MB"
+
+    fritzbox_bandwidth_total_readable:
+      value_template: |
+        {% set rate = states('sensor.fritzbox_total')|int(0) %}
+        {% if rate < 0 %}
+          0 kB/s
+        {% elif rate > 1000 %}
+          {{ "%.0f"|format(rate / 1000 | float | round()) }} mB/s
+        {% elif rate > 10000 %}
+          {{ "%.0f"|format(rate / 1000000 | float | round()) }} gB/s
+        {% else %}
+          {{ "%.0f"|format(rate | float | round()) }} kB/s
+        {% endif %}
+
+    manuel_status:
+      value_template: "{{states.proximity.home.attributes.dir_of_travel}}"
+
+
+- platform: rest
+  resource: http://127.0.0.1:8080/powerusage.json
+  name: Power Usage Yesterday
+  value_template: "{{ value_json.total }}"
+  unit_of_measurement: kWh
+  scan_interval: 600
+  state_class: 'total'
+  device_class: 'energy'
+
+- platform: rest
+  resource: http://127.0.0.1:8080/powerusage.php
+  name: Power Usage Yesterday Current
+  value_template: "{{ value_json.current }}"
+  unit_of_measurement: kWh
+  state_class: 'total'
+  device_class: 'energy'
+  json_attributes:
+    - last_reset
+
+- platform: rest
+  name: Auto
+  json_attributes:
+    - latitude
+    - longitude
+    - timeStamp
+  resource: http://127.0.0.1:8080/icloud.php?device=Auto
+  scan_interval: 120
+  value_template: "{{ value_json.timeStamp }}"
+
+- platform: rest
+  name: Rucksack
+  json_attributes:
+    - latitude
+    - longitude
+    - timeStamp
+  resource: http://127.0.0.1:8080/icloud.php?device=Rucksack
+  scan_interval: 120
+  value_template: "{{ value_json.timeStamp }}"
+
+- platform: rest
+  name: Fahrrad
+  json_attributes:
+    - latitude
+    - longitude
+    - timeStamp
+  resource: http://127.0.0.1:8080/icloud.php?device=Fahrrad
+  scan_interval: 120
+  value_template: "{{ value_json.timeStamp }}"
+
+- platform: command_line
+  name: vpntraffic_iphone11
+  value_template: '{{ value_json["total"] | float / 1024 }}'
+  json_attributes:
+    - endpoint
+    - download
+    - upload
+  command: !secret command_line_vpntraffic_iphone11
+  scan_interval: 600
+  unit_of_measurement: "GiB"
+
+- platform: command_line
+  name: vpntraffic_rebekka
+  value_template: '{{ value_json["total"] | float / 1024 }}'
+  json_attributes:
+    - endpoint
+    - download
+    - upload
+  command: !secret command_line_vpntraffic_rebekka
+  scan_interval: 600
+  unit_of_measurement: "GiB"
+
+- platform: command_line
+  name: vpntraffic_macbook
+  value_template: '{{ value_json["total"] | float / 1024 }}'
+  json_attributes:
+    - endpoint
+    - download
+    - upload
+  command: !secret command_line_vpntraffic_macbook
+  scan_interval: 600
+  unit_of_measurement: "GiB"
+
+- platform: command_line
+  name: vpntraffic_imst
+  value_template: '{{ value_json["total"] | float / 1024 }}'
+  json_attributes:
+    - endpoint
+    - download
+    - upload
+  command: !secret command_line_vpntraffic_imstptp
+  scan_interval: 600
+  unit_of_measurement: "GiB"
+
+- platform: command_line
+  name: vpntraffic_julia_rpi
+  value_template: '{{ value_json["total"] | float / 1024 }}'
+  json_attributes:
+    - endpoint
+    - download
+    - upload
+  command: !secret command_line_vpntraffic_julia_rpi
+  scan_interval: 600
+  unit_of_measurement: "GiB"
+
+- platform: command_line
+  name: vpntraffic_julia_bpi
+  value_template: '{{ value_json["total"] | float / 1024 }}'
+  json_attributes:
+    - endpoint
+    - download
+    - upload
+  command: !secret command_line_vpntraffic_julia_bpi
+  scan_interval: 600
+  unit_of_measurement: "GiB"
+
+- platform: command_line
+  name: vpntraffic_rebekka_ipad
+  value_template: '{{ value_json["total"] | float / 1024 }}'
+  json_attributes:
+    - endpoint
+    - download
+    - upload
+  command: !secret command_line_vpntraffic_rebekka_ipad
+  scan_interval: 600
+  unit_of_measurement: "GiB"
+
+- platform: command_line
+  name: vpntraffic_hansjoerg_ipad
+  value_template: '{{ value_json["total"] | float / 1024 }}'
+  json_attributes:
+    - endpoint
+    - download
+    - upload
+  command: !secret command_line_vpntraffic_hansjoerg_ipad
+  scan_interval: 600
+  unit_of_measurement: "GiB"
+
+- platform: command_line
+  name: vpntraffic_oracle
+  value_template: '{{ value_json["total"] | float / 1024 }}'
+  json_attributes:
+    - endpoint
+    - download
+    - upload
+  command: !secret command_line_vpntraffic_oracle
+  scan_interval: 600
+  unit_of_measurement: "GiB"
+
+- platform: command_line
+  name: vpntraffic_oracle2
+  value_template: '{{ value_json["total"] | float / 1024 }}'
+  json_attributes:
+    - endpoint
+    - download
+    - upload
+  command: !secret command_line_vpntraffic_oracle2
+  scan_interval: 600
+  unit_of_measurement: "GiB"
+
+- platform: command_line
+  name: HostTemperature_PiVPN
+  command: !secret hosttemperature_pivpn
+  unit_of_measurement: "ºC"
+  value_template: "{{ value | multiply(0.001) }}"
+  scan_interval: 600
+
+- platform: command_line
+  name: HostTemperature_Lenovo
+  command: !secret hosttemperature_lenovo
+  unit_of_measurement: "ºC"
+  value_template: '{{ value | multiply(0.001) }}'
+  scan_interval: 600
+
+- platform: command_line
+  command: !secret AP1wifi24devices
+  name: AP1wifi24devices
+  scan_interval: 60
+  json_attributes:
+    - devices
+  value_template: >
+    {{ value_json["devices"]|length }}
+
+- platform: command_line
+  command: !secret AP1wifi5devices
+  name: AP1wifi5devices
+  scan_interval: 60
+  json_attributes:
+    - devices
+  value_template: >
+    {{ value_json["devices"]|length }}
+
+- platform: command_line
+  command: !secret AP2wifi24devices
+  name: AP2wifi24devices
+  scan_interval: 60
+  json_attributes:
+    - devices
+  value_template: >
+    {{ value_json["devices"]|length }}
+
+- platform: command_line
+  command: !secret AP2wifi5devices
+  name: AP2wifi5devices
+  scan_interval: 60
+  json_attributes:
+    - devices
+  value_template: >
+    {{ value_json["devices"]|length }}
+
+- platform: command_line
+  command: !secret AP3wifi24devices
+  name: AP3wifi24devices
+  scan_interval: 60
+  json_attributes:
+    - devices
+  value_template: >
+    {{ value_json["devices"]|length }}
+
+- platform: command_line
+  command: !secret AP3wifi5devices
+  name: AP3wifi5devices
+  scan_interval: 60
+  json_attributes:
+    - devices
+  value_template: >
+    {{ value_json["devices"]|length }}
+
+- platform: template
+  sensors:
+    moonphases:
+      friendly_name: "Moon"
+      value_template: "{{ states.sensor.moon.state }}"
+      entity_picture_template: >
+        {% if is_state('sensor.moon', 'New moon') %}
+          /local/moonphases/NNewMoon.jpg
+        {% elif is_state('sensor.moon', 'Waxing crescent') %}
+          /local/moonphases/NWaxingCrescent.jpg
+        {% elif is_state('sensor.moon', 'First quarter') %}
+          /local/moonphases/NFirstQuarter.jpg
+        {% elif is_state('sensor.moon', 'Waxing gibbous') %}
+          /local/moonphases/NWaxingGibbous.jpg
+        {% elif is_state('sensor.moon', 'Full moon') %}
+          /local/moonphases/NFullMoon.jpg
+        {% elif is_state('sensor.moon', 'Waning gibbous') %}
+          /local/moonphases/NWaningGibbous.jpg
+        {% elif is_state('sensor.moon', 'Last quarter') %}
+          /local/moonphases/NLastQuarter.jpg
+        {% elif is_state('sensor.moon', 'Waning crescent') %}
+          /local/moonphases/NWaningCrescent.jpg
+        {% endif %}

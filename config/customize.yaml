@@ -1,0 +1,42 @@
+#background: center / cover no-repeat url("/local/backgrounds/bg-9.jpg") fixed
+person.manuel:
+  entity_picture: /local/manuel.jpg
+device_tracker.manuel_2:
+  entity_picture: /local/manuel.jpg
+sensor.oral_b_battery:
+  device_class: battery
+  icon: mdi:battery
+device_tracker.intel_nuc:
+  device_class: connectivity
+device_tracker.c4_9d_ed_ad_e8_36:
+  friendly_name: SurfacePro
+  icon: mdi:laptop
+device_tracker.00_e0_f8_2b_b3_6d:
+  friendly_name: KKMoon
+  icon: mdi:webcam
+device_tracker.7c_a1_77_eb_21_cf:
+  friendly_name: Rebekka
+device_tracker.juliawilfried:
+  friendly_name: Julia
+  entity_picture: '"/local/julia.jpg"'
+  image: '"/local/julia.jpg"'
+zone.julia_home:
+  icon: mdi:home-outline
+  name: Julia
+person.julia_julia:
+  entity_picture: /local/julia.jpg
+device_tracker.julia_c0_e8_62_96_34_a5:
+  entity_picture: '"/local/julia.jpg"'
+device_tracker.julia_wilfried:
+  friendly_name: Julia
+  entity_picture: /local/julia.jpg
+device_tracker.3e_e4_8a_50_8d_de:
+  friendly_name: Apple Watch
+device_tracker.ae_c8_83_2f_74_14:
+  friendly_name: iPhone 11
+device_tracker.86_17_0e_39_ca_ac:
+  friendly_name: Rebekka
+cover.wohnzimmer_curtain_left:
+  device_class: curtain
+cover.wohnzimmer_curtain_right:
+  device_class: curtain

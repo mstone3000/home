@@ -1,0 +1,53 @@
+- platform: switch
+  name: Stiegen LED
+  entity_id: switch.stiegen_led
+
+- platform: switch
+  name: Bildschirm Lampe
+  entity_id: switch.bildschirm_lampe
+
+- platform: switch
+  name: Licht Speis
+  entity_id: switch.licht_speis
+
+- platform: switch
+  name: Kueche Licht
+  entity_id: switch.binary_power_switch_instance_2_switch_0
+
+- platform: switch
+  name: Balkon Licht
+  entity_id: switch.balkon_strom
+
+- platform: switch
+  name: Spiegel Licht
+  entity_id: switch.binary_power_switch_instance_1_switch_0
+
+- platform: group
+  name: Kuche Unterboden
+  entities:
+    - light.hue_lightstrip_1
+    - light.hue_lightstrip_2
+
+- platform: group
+  name: Office
+  entities:
+    - light.hue_color_lamp_1
+    - light.color_light_1
+    - light.bildschirm_lampe
+    - light.office_lampe_level_light_color_on_off
+
+# template for homekit to toggle light group
+- platform: template
+  lights:
+    lightautomations:
+      value_template: '{{ states.group.light_automations.state }}'
+      turn_on:
+        - service: homeassistant.turn_on
+          data:
+            entity_id: 
+              - group.light_automations
+      turn_off:
+        - service: homeassistant.turn_off
+          data:
+            entity_id: 
+              - group.light_automations

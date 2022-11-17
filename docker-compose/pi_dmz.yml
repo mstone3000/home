@@ -1,0 +1,140 @@
+version: '3'
+services:
+  nginx:
+    container_name: nginx
+    restart: always
+    image: 'jc21/nginx-proxy-manager:latest'
+    network_mode: host
+    environment:
+      TZ: Europe/Vienna
+      DB_MYSQL_HOST: 172.17.0.1
+      DB_MYSQL_PORT: 3306
+      DB_MYSQL_USER: ${MYSQL_USER}
+      DB_MYSQL_PASSWORD: ${MYSQL_PW}
+      DB_MYSQL_NAME: ${MYSQL_DBNAME}
+    volumes:
+      - ./data:/data
+      - ./config/nginx:/etc/nginx
+      - ./letsencrypt:/etc/letsencrypt
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST_WAN}
+  db:
+    restart: always
+    image: 'jc21/mariadb-aria:latest'
+    container_name: nginx-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PW}
+      MYSQL_DATABASE: ${MYSQL_DBNAME}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PW}
+    network_mode: host
+    ports:
+      - 3307:3306
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST_WAN}
+
+  goaccess:
+    image: xavierh/goaccess-for-nginxproxymanager:latest
+    container_name: goaccess
+    restart: unless-stopped
+    environment:
+        - PUID=0
+        - PGID=0
+        - TZ=Europe/Vienna
+        - SKIP_ARCHIVED_LOGS=False #optional
+        - DEBUG=False #optional
+        - BASIC_AUTH=False #optional
+        - BASIC_AUTH_USERNAME=${GO_USER} #optional
+        - BASIC_AUTH_PASSWORD=${GO_PW} #optional
+        - EXCLUDE_IPS=127.0.0.1 #optional - comma delimited list
+        - LOG_TYPE=NPM #optional - more information below
+    ports:
+        - '7880:7880'
+    volumes:
+        - ./data/logs:/opt/log
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST_WAN}
+    depends_on:
+      - nginx
+
+  landingpage:
+    image: daledavies/jump:latest
+    container_name: landingpage
+    restart: always
+    ports:
+        - 9090:8080
+    volumes:
+        - ./landingpage/backgrounds:/backgrounds
+        - ./landingpage/search:/search
+        - ./landingpage/sites:/sites
+    environment:
+        SITENAME: '#home'
+        OWMAPIKEY: ${JUMP_OWMKEY}
+        LATLONG: ${JUMP_LATLNG}
+        NOINDEX: 'true'
+        SHOWGREETING: 'true'
+        NOINDEX: 'true'
+        CACHEBYPASS: 'false'
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST_WAN}
+
+  local-nginx:
+    container_name: httpd
+    image: nginx
+    restart: always
+    volumes:
+     - ./www:/code
+     - tmp:/code/tmp
+     - ./local/site.conf:/etc/nginx/nginx.conf:ro
+    ports:
+     - "9999:80"
+    environment:
+     - NGINX_HOST=${NGINX_HOST}
+     - NGINX_PORT=80
+    links:
+        - php
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST_WAN}
+
+  php:
+    image: php:7-fpm
+    restart: always
+    container_name: php
+    volumes:
+     - ./www:/code
+     - tmp:/code/tmp
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST_WAN}
+
+  smtp:
+    image: gmail-relay
+    container_name: mail
+    restart: always
+    ports:
+     - "25:25"
+    environment:
+      - RELAY_NETWORKS= :10.0.57.0/24
+      - GMAIL_USER=${GMAIL_USER}
+      - GMAIL_PASSWORD=${GMAIL_PW}
+      - MAILNAME=${GMAIL_MAILNAME}
+      - DISABLE_IPV6=1
+
+volumes:
+  tmp:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs

@@ -1,0 +1,570 @@
+- id: "1553300779445"
+  alias: Klo Bewegung
+  trigger:
+    - entity_id: binary_sensor.klo_sensor_occupancy
+      from: "off"
+      platform: state
+      to: "on"
+  condition: []
+  action:
+    - data:
+        entity_id: light.klo_lampe
+        brightness_pct: 15
+      service: homeassistant.turn_on
+- id: "1553300869322"
+  alias: Klo keine Bewegung
+  trigger:
+    - entity_id: binary_sensor.klo_sensor_occupancy
+      for: 00:12:00
+      from: "on"
+      platform: state
+      to: "off"
+  condition: []
+  action:
+    - data:
+        entity_id: light.klo_lampe
+      service: homeassistant.turn_off
+- id: "1593301196974"
+  alias: Speisezimmer Bewegung
+  trigger:
+    - entity_id: binary_sensor.speisezimmer_sensor_occupancy
+      from: "off"
+      platform: state
+      to: "on"
+  condition: []
+  action:
+    - data:
+        entity_id: switch.licht_speis
+      service: homeassistant.turn_on
+- id: "1953301646983"
+  alias: Speisezimmer keine Bewegung
+  trigger:
+    - entity_id: binary_sensor.speisezimmer_sensor_occupancy
+      for: 00:01:00
+      from: "on"
+      platform: state
+      to: "off"
+  condition: []
+  action:
+    - data:
+        entity_id: switch.licht_speis
+      service: homeassistant.turn_off
+- id: "1953302299487"
+  alias: Bad Bewegung
+  trigger:
+    - entity_id: binary_sensor.bad_sensor_occupancy
+      from: "off"
+      platform: state
+      to: "on"
+  condition: []
+  action:
+    - data:
+        entity_id: light.bad_deckenlampe
+        brightness_pct: 35
+      service: homeassistant.turn_on
+    - data:
+        entity_id: light.bad_hue_bloom
+        brightness_pct: 35
+      service: homeassistant.turn_on
+- id: "1953302493833"
+  alias: Bad keine Bewegung
+  trigger:
+    - entity_id: binary_sensor.bad_sensor_occupancy
+      for: 00:12
+      from: "on"
+      platform: state
+      to: "off"
+  condition:
+    - condition: state
+      entity_id: input_boolean.kinomodus
+      state: 'off'
+  action:
+    - data:
+        entity_id: light.bad_hue_bloom
+      service: homeassistant.turn_off
+    - data:
+        entity_id: light.bad_deckenlampe
+      service: homeassistant.turn_off
+    - data:
+        entity_id: light.spiegel_licht
+      service: homeassistant.turn_off
+
+
+- id: "19533023933833"
+  alias: Bad keine Bewegung HeimKino
+  trigger:
+    - entity_id: binary_sensor.bad_sensor_occupancy
+      for: 00:00:15
+      from: "on"
+      platform: state
+      to: "off"
+  condition:
+    - condition: state
+      entity_id: input_boolean.kinomodus
+      state: 'on'
+  action:
+    - data:
+        entity_id: light.bad_hue_bloom
+      service: homeassistant.turn_off
+    - data:
+        entity_id: light.bad_deckenlampe
+      service: homeassistant.turn_off
+    - data:
+        entity_id: light.spiegel_licht
+      service: homeassistant.turn_off
+
+- id: "1953368888802"
+  alias: Eingang keine Bewegung
+  trigger:
+    - entity_id: binary_sensor.eingang_motion_sensor
+      for: 00:05:00
+      from: "on"
+      platform: state
+      to: "off"
+  condition: []
+  action:
+    - data:
+        entity_id: light.eingang
+        transition: 15
+      service: homeassistant.turn_off
+- id: "1554370153479"
+  alias: Küche keine bewegung
+  trigger:
+    - entity_id: binary_sensor.kuche_sensor_occupancy
+      for: 00:15
+      from: "on"
+      platform: state
+      to: "off"
+  condition:
+    - condition: state
+      entity_id: input_boolean.kinomodus
+      state: 'off'
+  action:
+    - data:
+        entity_id: light.kueche_licht
+      service: homeassistant.turn_off
+    - data:
+        entity_id: light.kuchenlampe
+      service: homeassistant.turn_off
+- id: "1594370113429"
+  alias: Küche keine bewegung KinoModus
+  trigger:
+    - entity_id: binary_sensor.kuche_sensor_occupancy
+      for: 00:00:15
+      from: "on"
+      platform: state
+      to: "off"
+  condition:
+  - condition: state
+    entity_id: input_boolean.kinomodus
+    state: 'on'
+  action:
+    - data:
+        entity_id: light.kueche_licht
+      service: homeassistant.turn_off
+    - data:
+        entity_id: light.kuchenlampe
+      service: homeassistant.turn_off
+- id: "1953372824626"
+  alias: Schlafzimmer bewegung
+  trigger:
+    - entity_id: binary_sensor.schlafzimmer_sensor_occupancy
+      from: "off"
+      platform: state
+      to: "on"
+  condition:
+    - after: 07:00
+      before: 02:00
+      condition: time
+  action:
+    - data:
+        entity_id: light.schlafzimmer_licht
+        brightness_pct: 5
+      service: homeassistant.turn_on
+- id: "1953371876046"
+  alias: Schlafzimmer keine bewegung
+  trigger:
+    - entity_id: binary_sensor.schlafzimmer_sensor_occupancy
+      for: 00:00:05
+      from: "on"
+      platform: state
+      to: "off"
+  condition: []
+  action:
+    - data:
+        entity_id: light.schlafzimmer_licht
+      service: homeassistant.turn_off
+- id: "1952455578131"
+  alias: Dach keine bewegung
+  trigger:
+    - entity_id: binary_sensor.aeotec_zw074_multisensor_gen5_sensor_2
+      for: 00:10
+      from: "on"
+      platform: state
+      to: "off"
+  condition: []
+  action:
+    - data:
+        entity_id: light.dach_hue_go
+      service: homeassistant.turn_off
+- id: "193522321764"
+  alias: Skin setzen
+  trigger:
+    - event: start
+      platform: homeassistant
+  condition: []
+  action:
+    - data:
+        name: noctis
+      service: frontend.set_theme
+- id: "1593609022200"
+  alias: iOS Update Request
+  trigger:
+    - platform: time_pattern
+      minutes: /30
+  condition:
+    - condition: state
+      entity_id: device_tracker.apple_6f_98_f2
+      state: "not_home"
+  action:
+    - data:
+        message: request_location_update
+      service: notify.mobile_app_iphone_xs
+
+- alias: Dach Bewegung
+  trigger:
+  - entity_id: binary_sensor.zw074_multisensor_gen5_home_security_motion_detected
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition:
+  - condition: or
+    conditions:
+      - condition: sun
+        after: sunset
+        after_offset: "-01:00:00"
+      - condition: sun
+        before: sunrise
+        before_offset: "01:00:00"
+  action:
+  - data:
+      entity_id: light.dach_hue_go
+    service: homeassistant.turn_on
+
+#- alias: Dach Bewegung Cam Trigger On
+#  initial_state: true
+#  trigger:
+#  - entity_id: binary_sensor.4_in_one_multisensor_g5_any
+#    from: 'off'
+#    platform: state
+#    to: 'on'
+#  action:
+#  - data:
+#      entity_id: switch.dach_cam_trigger
+#    service: homeassistant.turn_on
+
+# - alias: Dach Bewegung Cam Trigger Off
+#   initial_state: true
+#   trigger:
+#   - entity_id: binary_sensor.4_in_one_multisensor_g5_any
+#     from: 'on'
+#     platform: state
+#     to: 'off'
+#   action:
+#   - data:
+#       entity_id: switch.dach_cam_trigger
+#     service: homeassistant.turn_off
+
+- alias: Eingang bewegung Tag
+  trigger:
+  - entity_id: binary_sensor.eingang_motion_sensor
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition:
+  - after: sunrise
+    after_offset: '1:00:00'
+    condition: sun
+  - condition: state
+    entity_id: 'light.eingang'
+    state: 'off'
+  action:
+  - data:
+      brightness: '200'
+      entity_id: light.eingang
+      transition: 5
+    service: homeassistant.turn_on
+
+- alias: Küche Schalter 2 Esstisch
+  trigger:
+    - platform: state
+      entity_id: switch.binary_power_switch_instance_1_switch_2
+      to: "on"
+  action:
+  - service: light.toggle
+    target:
+      entity_id: light.esstisch
+  - service: switch.turn_off
+    target:
+      entity_id: switch.binary_power_switch_instance_1_switch_2
+
+- alias: Eingang Bewegung Nacht
+  trigger:
+  - entity_id: binary_sensor.eingang_motion_sensor
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition:
+  - condition: or
+    conditions:
+      - condition: sun
+        after: sunset
+        after_offset: "-01:00:00"
+      - condition: sun
+        before: sunrise
+        before_offset: "01:00:00"
+  - condition: state
+    entity_id: 'light.eingang'
+    state: 'off'
+  action:
+  - data:
+      brightness: '100'
+      entity_id: light.eingang
+    service: homeassistant.turn_on
+
+  - data:
+      brightness: '80'
+      entity_id: light.esstisch
+    service: homeassistant.turn_on
+
+- alias: Wohnzimmer 1 Bewegung
+  trigger:
+  - entity_id: binary_sensor.wohnzimmer_sensor_occupancy
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition:
+  - condition: or
+    conditions:
+      - condition: sun
+        after: sunset
+        after_offset: "-01:00:00"
+      - condition: sun
+        before: sunrise
+        before_offset: "01:00:00"
+  action:
+  - data:
+      entity_id: light.stiegen_led
+    service: homeassistant.turn_on
+  - data:
+      entity_id: light.hue_lightstrip_1
+    service: homeassistant.turn_on
+  - data:
+      entity_id: light.hue_lightstrip_2
+    service: homeassistant.turn_on
+  - data:
+      entity_id: light.esstisch
+    service: homeassistant.turn_on
+- alias: Küche Bewegung
+  trigger:
+  - entity_id: binary_sensor.kuche_sensor_occupancy
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition:
+  - condition: or
+    conditions:
+      - condition: sun
+        after: sunset
+        after_offset: "-01:00:00"
+      - condition: sun
+        before: sunrise
+        before_offset: "01:00:00"
+      - condition: numeric_state
+        entity_id: sensor.wohnzimmer_sensor_illuminance
+        below: 10
+  action:
+  - data:
+      entity_id: light.kueche_licht
+    service: homeassistant.turn_on
+  - data:
+      entity_id: light.kuchenlampe
+      brightness_pct: 30
+    service: homeassistant.turn_on
+- alias: Turn On Soundbar in Morning
+  trigger:
+  - entity_id: binary_sensor.hue_motion_sensor_1_motion
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition:
+    - condition: time
+      after: '07:00:00'
+      before: '12:00:00'
+  action:
+  - data:
+      entity_id: switch.amplifier
+    service: homeassistant.turn_on
+  - data:
+      entity_id: automation.turn_on_soundbar_in_morning
+    service: homeassistant.turn_off
+- alias: Turn On Soundbar Automation
+  trigger:
+  - platform: time
+    at: "20:00:00"
+  action:
+  - data:
+      entity_id: automation.turn_on_soundbar_in_morning
+    service: homeassistant.turn_on
+- alias: Turn On Dach Strom
+  #initial_state: true
+  trigger:
+  - platform: state
+    entity_id: switch.tradfri_outlet_5
+    from: 'on'
+    to: 'off'
+    for:
+      minutes: 5
+  action:
+  - data:
+      entity_id: switch.tradfri_outlet_5
+    service: homeassistant.turn_on
+- id: '1553301196974'
+  alias: Speisezimmer Bewegung
+  trigger:
+  - entity_id: binary_sensor.speisezimmer_sensor_occupancy
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - data:
+      entity_id: switch.licht_speis
+    service: homeassistant.turn_on
+- id: '1553301646983'
+  alias: Speisezimmer keine Bewegung
+  trigger:
+  - entity_id: binary_sensor.speisezimmer_sensor_occupancy
+    for: 00:01:00
+    from: 'on'
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data:
+      entity_id: switch.licht_speis
+    service: homeassistant.turn_off
+- id: '1553302661826'
+  alias: Tuere Klingelt
+  trigger:
+  - entity_id: binary_sensor.tuerklingel
+    platform: state
+    from: "off"
+    to: "on"
+  condition: []
+  action:
+  - service: shell_command.klingel_ausloeser
+  - data:
+      entity_id: switch.binary_power_switch_instance_2_switch
+    service: homeassistant.turn_off
+  - data:
+      message: "Türe Klingelt"
+    service: notify.html5
+  - service: camera.snapshot
+    data:
+      entity_id: camera.eingang
+      filename: '/config/www/eingang/snapshot_{{ now ().year }}_{{ now ().month }}_{{ now ().day }}_{{ now ().hour }}_{{ now ().minute }}.png'
+  - service: notify.mobile_app_iphone_xs
+    data:
+      title: "Wohnung"
+      message: "Eingang Türklingel klingelte."
+      data:
+        attachment:
+          url: !secret eingangimageurl
+          content-type: png
+          hide-thumbnail: false
+        push:
+          sound: "doorbell-7.wav"
+  - service: image_processing.scan
+    target:
+        entity_id: image_processing.deepstack_object_eingang_rtsp
+  - service: notify.lg
+    data:
+      message: "Türe Klingelt!"
+  #- data:
+  #    data:
+  #      displaytime: 10000
+  #      icon: info
+  #    message: Türe Klingelt!
+  #    title: Innsbruck
+  #  service: notify.ibkwohnzimmer     
+          
+
+- id: '1553455578131'
+  alias: Dach keine bewegung
+  trigger:
+  - entity_id: binary_sensor.zw074_multisensor_gen5_home_security_motion_detected
+    for: 00:10
+    from: 'on'
+    platform: state
+    to: 'off'
+  condition: []
+  action:
+  - data:
+      entity_id: light.dach_hue_go
+    service: homeassistant.turn_off
+
+  
+- alias: "Failed HTTP login attempt notification auto-dismiss"
+  trigger:
+    - platform: state
+      entity_id: persistent_notification.http_login
+    - event: start
+      platform: homeassistant
+  condition:
+    condition: and
+    conditions: 
+      - condition: template
+        value_template: "{{ trigger.to_state.state != 'None' }}"
+      - condition: or
+        conditions:
+          - condition: template
+            value_template: '{% if(states.persistent_notification.http_login.attributes is defined) %}{{("10.0.57.10" in states.persistent_notification.http_login.attributes.message)}}{%else%}false{%endif%}'
+          - condition: template
+            value_template: '{% if(states.persistent_notification.http_login.attributes is defined) %}{{("10.0.57.11" in states.persistent_notification.http_login.attributes.message)}}{%else%}false{%endif%}'
+          - condition: template
+            value_template: '{% if(states.persistent_notification.http_login.attributes is defined) %}{{("10.0.57.12" in states.persistent_notification.http_login.attributes.message)}}{%else%}false{%endif%}'
+          - condition: template
+            value_template: '{% if(states.persistent_notification.http_login.attributes is defined) %}{{("192.168.178.3" in states.persistent_notification.http_login.attributes.message)}}{%else%}false{%endif%}'
+          - condition: template
+            value_template: '{% if(states.persistent_notification.http_login.attributes is defined) %}{{("83.175.81.128" in states.persistent_notification.http_login.attributes.message)}}{%else%}false{%endif%}'
+  action:
+    - service: persistent_notification.dismiss
+      data:
+        notification_id: 'http_login'  
+
+
+- alias: persistent_notification_clear_pwned
+  id: '1953309022209'
+  mode: parallel
+  trigger:
+    - platform: event
+      event_type: call_service
+      event_data:
+        domain: persistent_notification
+        service: create
+  condition:
+    - condition: template
+      value_template: >
+        {{ 'supervisor_issue_pwned' in trigger.event.data.service_data.notification_id }}
+  action:
+    - service: persistent_notification.dismiss
+      data:
+        notification_id: >
+          {{ trigger.event.data.service_data.notification_id }}
+    # Remove this after testing :-)
+    #- service: persistent_notification.create
+    #  data:
+    #    title: Dismissed notification
+    #    message: >
+    #      {{ trigger.event.data.service_data.notification_id }}

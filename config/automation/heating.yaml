@@ -1,0 +1,177 @@
+- alias: Bad Heizung Ein
+  trigger:
+  - platform: time_pattern
+    minutes: /5
+  - platform: state
+    entity_id: 'activity.state'
+  - platform: state
+    entity_id: 'person.manuel'
+  condition:
+      - condition: state
+        entity_id: 'calendar.heizung'
+        state: 'on'
+      - condition: state
+        entity_id: 'climate.bad'
+        state: 'off'
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: 'person.manuel'
+            state: 'home'
+          - condition: template
+            value_template: '{{ float(states.proximity.home.state) < 15 }}'
+          #- condition: template
+          #  value_template: '{{ states.proximity.home.attributes.dir_of_travel == "towards" }}'
+      #- condition: template
+      #  value_template: '{{ float(states.climate.bad.attributes.temperature) > float(states.sensor.bad_sensor_temp.state) }}'
+  action:
+    - data:
+        entity_id: climate.bad
+      service: homeassistant.turn_on
+      
+- alias: Bad Heizung Aus
+  trigger:
+  - platform: time_pattern
+    minutes: /5
+  - platform: state
+    entity_id: 'activity.state'
+  - platform: state
+    entity_id: 'person.manuel'
+  condition:
+    - condition: state
+      entity_id: 'climate.bad'
+      state: 'heat'
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: 'person.manuel'
+          state: 'not_home'
+        - condition: state
+          entity_id: 'calendar.heizung'
+          state: 'off'
+        #- condition: template
+        #  value_template: '{{ float(states.climate.bad.attributes.temperature) < float(states.sensor.bad_sensor_temp.state) }}'
+  action:
+    - data:
+        entity_id: climate.bad
+      service: homeassistant.turn_off
+    - data:
+        entity_id: climate.schlafzimmer
+      service: homeassistant.turn_off
+      
+- alias: Kueche Heizung Ein
+  trigger:
+  - platform: time_pattern
+    minutes: /5
+  - platform: state
+    entity_id: 'activity.state'
+  - platform: state
+    entity_id: 'person.manuel'
+  condition:
+      - condition: state
+        entity_id: 'calendar.heizung'
+        state: 'on'
+      - condition: state
+        entity_id: 'climate.kueche'
+        state: 'off'
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: 'person.manuel'
+            state: 'home'
+          - condition: template
+            value_template: '{{ float(states.proximity.home.state) < 15 }}'
+          #- condition: template
+          #  value_template: '{{ states.proximity.home.attributes.dir_of_travel == "towards" }}'
+      #- condition: template
+      #  value_template: '{{ float(states.climate.kueche.attributes.temperature) > float(states.sensor.kueche_sensor_temp.state) }}'
+  action:
+    - data:
+        entity_id: climate.kueche
+      service: homeassistant.turn_on
+      
+- alias: Kueche Heizung Aus
+  trigger:
+  - platform: time_pattern
+    minutes: /5
+  - platform: state
+    entity_id: 'activity.state'
+  - platform: state
+    entity_id: 'person.manuel'
+  condition:
+    - condition: state
+      entity_id: 'climate.kueche'
+      state: 'heat'
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: 'person.manuel'
+          state: 'not_home'
+        - condition: state
+          entity_id: 'calendar.heizung'
+          state: 'off'
+        #- condition: template
+        #  value_template: '{{ float(states.climate.kueche.attributes.temperature) < float(states.sensor.kueche_sensor_temp.state) }}'
+  action:
+    - data:
+        entity_id: climate.kueche
+      service: homeassistant.turn_off
+      
+- alias: Wohnzimmer Heizung Ein
+  trigger:
+  - platform: time_pattern
+    minutes: /5
+  - platform: state
+    entity_id: 'activity.state'
+  - platform: state
+    entity_id: 'person.manuel'
+  condition:
+      - condition: state
+        entity_id: 'calendar.heizung'
+        state: 'on'
+      - condition: state
+        entity_id: 'climate.wohnzimmer'
+        state: 'off'
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: 'person.manuel'
+            state: 'home'
+          - condition: template
+            value_template: '{{ float(states.proximity.home.state) < 15 }}'
+          #- condition: template
+          #  value_template: '{{ states.proximity.home.attributes.dir_of_travel == "towards" }}'
+      #- condition: template
+      #  value_template: '{{ float(states.climate.wohnzimmer.attributes.temperature) > float(states.sensor.wohnzimmer_sensor_1_temperature.state) }}'
+  action:
+    - data:
+        entity_id: climate.wohnzimmer
+      service: homeassistant.turn_on
+      
+- alias: Wohnzimmer Heizung Aus
+  trigger:
+  - platform: time_pattern
+    minutes: /5
+  - platform: state
+    entity_id: 'activity.state'
+  - platform: state
+    entity_id: 'person.manuel'
+  condition:
+    - condition: state
+      entity_id: 'climate.wohnzimmer'
+      state: 'heat'
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: 'person.manuel'
+          state: 'not_home'
+        - condition: state
+          entity_id: 'calendar.heizung'
+          state: 'off'
+        #- condition: template
+        #  value_template: '{{ float(states.climate.wohnzimmer.attributes.temperature) < float(states.sensor.wohnzimmer_sensor_1_temperature.state) }}'
+  action:
+    - data:
+        entity_id: climate.wohnzimmer
+      service: homeassistant.turn_off
+

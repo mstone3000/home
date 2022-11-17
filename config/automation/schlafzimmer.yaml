@@ -1,0 +1,23 @@
+- alias: Schlafzimmer Licht auto aus
+  trigger:
+    platform: state
+    entity_id: light.schlafzimmer_licht
+    to: "on"
+    for: "00:05:00"
+  action:
+    service: homeassistant.turn_off
+    entity_id: light.schlafzimmer_licht
+
+- alias: Schlafzimmer Automation wieder ein
+  trigger:
+    - platform: time_pattern
+      hours: "1"
+      minutes: "1"
+  condition:
+      - condition: time
+        after: '07:01:00'
+        before: '19:00:00'
+  action:
+    - data:
+        entity_id: automation.schlafzimmer_bewegung
+      service: homeassistant.turn_off

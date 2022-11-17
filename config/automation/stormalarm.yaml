@@ -1,0 +1,15 @@
+- alias: Alert me about weather warnings
+  trigger:
+    platform: state
+    entity_id: binary_sensor.meteoalarm
+    from: ‘off’
+  action:
+    - service: notify.mobile_app_iphone_xs
+      data:
+        title: "{{state_attr('binary_sensor.meteoalarm', 'headline')}}"
+        message: "{{state_attr('binary_sensor.meteoalarm', 'description')}} um {{state_attr('binary_sensor.meteoalarm', 'effective')}}"
+        data:
+          attachment:
+            url: https://img.allmetsat.com/sat/anim-msg-de-ir.gif
+            content-type: gif
+            hide-thumbnail: false

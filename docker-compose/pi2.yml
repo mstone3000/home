@@ -1,0 +1,114 @@
+version: '3.6'
+services:
+    rtsp-simple-server:
+        restart: always
+        container_name: rtspproxy
+        network_mode: host
+        image: aler9/rtsp-simple-server
+        volumes:
+          - ./rtsp-simple-server.yml:/rtsp-simple-server.yml
+        environment:
+          - RTSP_PROTOCOLS=tcp
+          
+  motion:
+    restart: always
+    image: motionproject/motion
+    container_name: motion
+    network_mode: host
+    environment:
+      - TZ=Europe/Vienna
+    ports:
+      - 8079:8080
+      - 8081:8081
+    volumes:
+      - /media/NAS/Public/Surveillance/Eingang/:/media/Eingang
+      - /media/NAS/Public/RPI/motion/motion.conf:/etc/motion/motion.conf
+      - /media/NAS/Public/RPI/motion/script.sh:/script.sh
+    command: motion -n
+    
+  scrypted:
+    image: koush/scrypted
+    container_name: scrypted
+    restart: unless-stopped
+    network_mode: host
+    group_add:
+      - 107
+    environment:
+      - TZ=Europe/Vienna
+    volumes:
+      - ./scrypted:/server/volume
+    devices:
+      - "/dev/vchiq:/dev/vchiq"
+      
+  bt-mqtt-gateway:
+    image: zewelor/bt-mqtt-gateway
+    container_name: bt-mqtt-gateway
+    restart: always
+    volumes:
+      - ./config.yaml:/application/config.yaml
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    network_mode: host
+  
+  grafana:
+    restart: always
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    env_file:
+      - 'env.grafana'
+    user: "0"
+    volumes:
+      - ./data:/var/lib/grafana
+      - ./grafana.ini:/etc/grafana/grafana.ini
+    environment:
+      GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
+      GF_AUTH_GENERIC_OAUTH_NAME: "authentik"
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: ${AK_OAUTH_CLIENT_ID}
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: ${AK_OAUTH_CLIENT_SECRET}
+      GF_AUTH_GENERIC_OAUTH_SCOPES: "openid profile email"
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL: ${AK_OAUTH_AUTH_URL}
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: ${AK_OAUTH_TOKEN_URL}
+      GF_AUTH_GENERIC_OAUTH_API_URL: ${AK_OAUTH_AUTH_API_URL}
+      GF_AUTH_SIGNOUT_REDIRECT_URL: ${AK_OAUTH_AUTH_REDIRECT_URL}
+      GF_AUTH_OAUTH_AUTO_LOGIN: "true"
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(groups[*], 'Owner') && 'Admin' || contains(groups[*], 'Grafana Editors') && 'Editor' || 'Viewer'"
+      
+  deepstack:
+    restart: always
+    container_name: deepstack
+    environment:
+      - VISION-DETECTION=True
+      - API-KEY=mysecretkey
+    volumes:
+      - './datastore:/datastore'
+    ports:
+      - '5000:5000'
+    image: deepquestai/deepstack:arm64
+    
+  lighttpd:
+    restart: always
+    image: registry.gitlab.com/gotschi/docker-lighttpd-php:docker-client
+    container_name: lighttpd
+    network_mode: bridge
+    ports:
+      - "8080:80"
+    volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /media/NAS/Public/RPI/lighttpd/html:/var/www/html
+        - /media/NAS/Public/Webcam:/media/webcam
+        - ./docker-lighttpd/run.sh:/run.sh
+    command:
+        /run.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1/index.php"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST}

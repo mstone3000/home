@@ -1,0 +1,111 @@
+version: '3.6'
+services:
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    image: koenkk/zigbee2mqtt
+    volumes:
+      - ./docker-zigbee2mqtt/data:/app/data
+      - /run/udev:/run/udev:ro
+    restart: always
+    network_mode: host
+    privileged: true
+    environment:
+      - TZ=Europe/Vienna
+    depends_on:
+     - mqtt
+    devices:
+    - /dev/ttyUSB0
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8880/"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST}
+
+  zwavejs:
+    container_name: zwavejs
+    image: kpine/zwave-js-server:latest
+    restart: unless-stopped
+    depends_on:
+     - mqtt
+    environment:
+      S0_LEGACY_KEY: ${ZWAVE_KEY}
+      LOGTOFILE: "true"
+      TZ: "Europe/Vienna"
+    devices:
+      - '/dev/serial/by-id/usb-0658_0200-if00:/dev/zwave'
+    volumes:
+      - ./docker-zwavejs/cache:/cache
+      - tmp:/logs
+    ports:
+      - '3000:3000'
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST}
+
+  mqtt:
+    container_name: mqtt
+    restart: always
+    ports:
+      - '1883:1883'
+    volumes:
+      - ./docker-mqtt/data:/mosquitto
+      - ./docker-mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    image: eclipse-mosquitto
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST}
+
+  speedtest:
+    image: moafrancky/speedtest2mqtt:latest
+    container_name: speedtest2mqtt
+    depends_on:
+     - mqtt
+    environment:
+      - MQTT_HOST=172.17.0.1
+      - MQTT_TOPIC=speedtest
+      - MQTT_ID=speedtest2mqtt
+      - CRON=30 * * * *
+    restart: unless-stopped
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST}
+
+  smokeping:
+    image: linuxserver/smokeping
+    container_name: smokeping
+    network_mode: bridge
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Vienna
+    volumes:
+      - /media/NAS/Public/RPI/smokeping/config:/config
+      - /media/NAS/Public/RPI/smokeping/data:/data
+      - /media/NAS/Public/RPI/smokeping/log:/var/www/logs
+    ports:
+      - 8090:80
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+#      start_period: 40s
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST}
+
+volumes:
+  tmp:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs

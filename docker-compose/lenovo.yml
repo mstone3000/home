@@ -1,0 +1,282 @@
+version: '3.6'
+services:  
+  vscode:
+    image: linuxserver/code-server
+    container_name: vscode
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Vienna
+      - SUDO_PASSWORD=${VSCODE_SUDO_PW}
+      - DOCKER_MODS=linuxserver/mods:universal-docker|linuxserver/mods:code-server-php
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /media/NAS/Public/RPI/vscode:/config
+      - /media/NAS/Public/RPI/vscode/log:/var/log
+      - /home/manu:/config/workspace
+    ports:
+      - 8443:8443
+    restart: unless-stopped
+  
+  postgresql:
+    image: postgres:12-alpine
+    restart: always
+    container_name: authentik-postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - ./data/pgsql:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${PG_PASS:?database password required}
+      - POSTGRES_USER=${PG_USER:-authentik}
+      - POSTGRES_DB=${PG_DB:-authentik}
+    env_file:
+      - .env
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://${GL_HOST}:${GL_PORT}"
+        
+  redis:
+    image: redis:alpine
+    restart: always
+    container_name: authentik-redis
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://${GL_HOST}:${GL_PORT}"
+        
+  server:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2022.8.2}
+    restart: always
+    container_name: authentik-server
+    command: server
+    environment:
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "true"
+      # WORKERS: 2
+    volumes:
+      - ./media:/media
+      - ./custom-templates:/templates
+      - geoip:/geoip
+    env_file:
+      - .env
+    ports:
+      - "0.0.0.0:${AUTHENTIK_PORT_HTTP:-9000}:9000"
+      - "0.0.0.0:${AUTHENTIK_PORT_HTTPS:-9443}:9443"
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://${GL_HOST}:${GL_PORT}"
+        
+  worker:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2022.8.2}
+    restart: always
+    command: worker
+    container_name: authentik-worker
+    environment:
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "true"
+    user: root
+    volumes:
+      - ./media:/media
+      - ./certs:/certs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./custom-templates:/templates
+      - geoip:/geoip
+    env_file:
+      - .env
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://${GL_HOST}:${GL_PORT}"
+  geoipupdate:
+    restart: always
+    container_name: authentik-geoipupdate
+    image: "maxmindinc/geoipupdate:latest"
+    volumes:
+      - "geoip:/usr/share/GeoIP"
+    environment:
+      GEOIPUPDATE_EDITION_IDS: "GeoLite2-City"
+      GEOIPUPDATE_FREQUENCY: "8"
+    env_file:
+      - .env
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://${GL_HOST}:${GL_PORT}"
+        
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Vienna
+    volumes:
+      - ./data/library:/config
+      - ./data/tvseries:/data/tvshows
+      - /media/Bert/Filme:/data/movies
+      - /media/NAS/Public/Torrents/complete:/data/torrents
+      - /media/NAS/Public/Recordings:/data/recordings
+    devices:
+      - /dev/dri:/dev/dri
+    ports:
+      - 8000:8096
+      - 8920:8920
+      - 7359:7359/udp
+    restart: unless-stopped
+
+  nextcloud:
+    image: lscr.io/linuxserver/nextcloud
+    container_name: nextcloud
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Vienna
+    volumes:
+      - ./config:/config
+      - /media/NAS/Public/Nextcloud:/data
+    ports:
+      - 8096:443
+    restart: unless-stopped
+  
+  guacd:
+    container_name: guacd
+    image: guacamole/guacd
+    restart: unless-stopped
+    
+  guacamole:
+    container_name: guacamole
+    image: 'guacamole/guacamole:1.4.0'
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    environment:
+      GUACD_HOSTNAME: "guacd"
+      MYSQL_HOSTNAME: "10.0.57.40"
+      MYSQL_DATABASE: "guacamole"
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "samsung"
+      OPENID_AUTHORIZATION_ENDPOINT: ${AK_AUTH_ENDPOINT}
+      OPENID_CLIENT_ID: ${AK_OPENID_CLIENT_ID}
+      OPENID_ISSUER: ${AK_OPENID_ISSUER}
+      OPENID_JWKS_ENDPOINT: ${AK_OPENID_JWKS}
+      OPENID_REDIRECT_URI: ${AK_GUACAMOLE_URI}
+    depends_on:
+      - guacd
+      
+  mysql:
+    privileged: true
+    image: mariadb
+    container_name: mysql
+    network_mode: bridge
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Vienna
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PW}
+      - MYSQL_DATABASE=${MYSQL_DB}
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_USER_PW}
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ./mysql/log:/var/log/mysql
+      
+  mongodb:
+    container_name: mongodb
+    image: "mongo:4.2"
+    volumes:
+      - /media/usbssd/docker-graylog/mongodb_data:/data/db
+    restart: "always"
+
+  elasticsearch:
+    container_name: elasticsearch
+    environment:
+      ES_JAVA_OPTS: "-Xms2g -Xmx2g"
+      bootstrap.memory_lock: "true"
+      discovery.type: "single-node"
+      http.host: "0.0.0.0"
+      action.auto_create_index: "false"
+    image: "docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2"
+    ulimits:
+      memlock:
+        hard: -1
+        soft: -1
+    volumes:
+      - /media/usbssd/docker-graylog/es_data:/usr/share/elasticsearch/data
+    restart: "always"
+
+  graylog:
+    image: "graylog/graylog:4.3.9"
+    container_name: graylog
+    depends_on:
+      - elasticsearch
+      - mongodb
+    entrypoint: "/usr/bin/tini -- wait-for-it elasticsearch:9200 --  /docker-entrypoint.sh"
+    environment:
+      GRAYLOG_NODE_ID_FILE: "/usr/share/graylog/data/config/node-id"
+      GRAYLOG_PASSWORD_SECRET: ${GL_PW_SECRET}
+      GRAYLOG_ROOT_PASSWORD_SHA2: ${GL_ROOT_PW}
+      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:7000"
+      GRAYLOG_HTTP_EXTERNAL_URI: "http://localhost:7000/"
+      GRAYLOG_ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+      GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+    ports:
+    - "5044:5044/tcp"   # Beats
+    - "5140:5140/udp"   # Syslog
+    - "5140:5140/tcp"   # Syslog
+    - "5141:5141/udp"   # Opnsense Syslog
+    - "5142:5142/udp"   # OpenWRT Syslog
+    - "5555:5555/tcp"   # RAW TCP
+    - "5555:5555/udp"   # RAW TCP
+    - "7000:7000/tcp"   # Server API
+    - "12201:12201/tcp" # GELF TCP
+    - "12201:12201/udp" # GELF UDP
+    - "12401:12401/udp"
+    - "13301:13301/tcp" # Forwarder data
+    - "13302:13302/tcp" # Forwarder config
+    volumes:
+      - ./GeoLite2-City.mmdb:/etc/graylog/server/GeoLite2-City.mmdb
+      - "/media/usbssd/docker-graylog/graylog_plugin:/usr/share/graylog/plugin"
+      - "/media/usbssd/docker-graylog/graylog_data:/usr/share/graylog/data/data"
+      - "/media/usbssd/docker-graylog/graylog_journal:/usr/share/graylog/data/journal"
+    restart: "always"
+    
+    
+  docker-virt-manager:
+    restart: always
+    container_name: virt-manager
+    ports:
+      - '5800:5800'
+      - '5900:5900'
+    volumes:
+      - './docker/appdata/virt-manager:/config:rw'
+      - '/dev/urandom:/dev/urandom:ro'
+      - '/media/usbssd/kvm/images:/images'
+    
+volumes:
+  geoip:
+    driver: local

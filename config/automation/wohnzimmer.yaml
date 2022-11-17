@@ -1,0 +1,44 @@
+- alias: "Traffic Lights"
+  trigger:
+  - platform: webhook
+    webhook_id: trafficlight
+  condition:
+    - condition: state
+      entity_id: person.manuel
+      state: "home"
+  action:
+  - service: scene.create
+    data:
+      scene_id: before
+      snapshot_entities:
+      - light.hue_iris_1
+  - service: light.turn_on
+    entity_id: light.hue_iris_1
+    data:
+      flash: long
+      rgb_color: [255,0,0]
+  - delay: 2
+  - service: scene.turn_on
+    entity_id: scene.before
+
+    
+
+- alias: Wohnzimmer 2 Bewegung zu Helligkeit Geringer Iris
+  trigger:
+  - entity_id: binary_sensor.wohnzimmer_sensor_motion_2
+    from: 'on'
+    platform: state
+    to: 'off'
+    for:
+      minutes: 30
+  condition:
+    - condition: state
+      entity_id: light.hue_iris_1
+      state: "on"
+  action:
+    - service: homeassistant.turn_on
+      data:
+        entity_id: 
+          - light.hue_iris_1
+        brightness_pct: 30
+        transition: 20

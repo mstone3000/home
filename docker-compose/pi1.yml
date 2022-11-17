@@ -1,0 +1,138 @@
+version: '3.6'
+services:
+  homeassistant:
+    restart: always
+    privileged: true
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    volumes:
+      - ./docker-homeassistant/config:/config
+      - /run/dbus:/run/dbus:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /media/NAS/Public:/share/NAS
+      - /media/NAS/Public/Downloads:/media/downloads
+      - /media/NAS/Public/Webcam:/media/webcam
+      - /media/NAS/Public/Torrents/complete:/media/torrents
+      - /media/NAS/Public:/media/NAS
+      - type: tmpfs
+        target: /config/openwrt/cache
+        tmpfs:
+          size: 100000
+    network_mode: host
+    environment:
+      - TZ=Europe/Vienna
+    depends_on:
+      - lighttpd
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8123/"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST}
+
+  ps5-mqtt:
+    container_name: ps5mqtt
+    image: ghcr.io/funkeyflo/ps5-mqtt/aarch64:1.2.2
+    entrypoint: /config/run.sh
+    restart: unless-stopped
+    volumes:
+      - ./docker-ps5/config:/config
+    network_mode: host
+    environment:
+      - MQTT_HOST=${MQTT_HOST}
+      - MQTT_PORT=1883
+      - MQTT_USERNAME=mqtt
+      - MQTT_PASSWORD=mqtt
+
+      - DEVICE_CHECK_INTERVAL=5000
+      - DEVICE_DISCOVERY_INTERVAL=60000
+      - ACCOUNT_CHECK_INTERVAL=5000
+
+      - 'PSN_ACCOUNTS=${PSN_ACCOUNT}'
+
+      - INCLUDE_PS4_DEVICES=false
+
+      - FRONTEND_PORT=8645
+
+      - CREDENTIAL_STORAGE_PATH=/config/credentials.json
+      - DEBUG=@ha:ps5:*
+
+  frigate:
+    container_name: frigate
+    privileged: true
+    restart: unless-stopped
+    image: blakeblackshear/frigate:stable
+    shm_size: "64mb"
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./docker-frigate/config.yml:/config/config.yml:ro
+      - /media/NAS/Public/Surveillance/Frigate:/media/frigate
+      - type: tmpfs
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - "5000:5000"
+      - "1935:1935" # RTMP feeds
+    environment:
+      FRIGATE_RTSP_PASSWORD: "password"
+
+  lighttpd:
+    restart: always
+    image: jitesoft/lighttpd
+    container_name: lighttpd
+    network_mode: bridge
+    ports:
+      - "8080:80"
+    volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /media/NAS/Public/RPI/lighttpd/html:/var/www/html
+        - /media/NAS/Public/Surveillance/Eingang/:/media/Eingang
+        - /media/NAS/Public/Webcam:/media/webcam
+        - ./docker-lighttpd/run.sh:/run.sh
+    command:
+        /run.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1/index.php"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST}
+
+  bitwarden:
+    container_name: bitwarden
+    restart: always
+    volumes:
+      - './docker-bitwarden/data/:/data/'
+    ports:
+      - '7277:80'
+      - '3012:3012'
+    image: 'vaultwarden/server:latest'
+    environment:
+      - WEBSOCKET_ENABLED=true
+      - SIGNUPS_ALLOWED=false
+      - DOMAIN=${BW_DOMAIN}
+      - SMTP_HOST=10.0.5.2
+      - SMTP_FROM=${BW_Mail}
+      - SMTP_PORT=25
+      - SMTP_SECURITY=off
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST}

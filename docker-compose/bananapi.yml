@@ -1,0 +1,42 @@
+version: "3.6"
+services:
+  tvheadend:
+    image: linuxserver/tvheadend
+    container_name: tvheadend
+    network_mode: host
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Vienna
+      - RUN_OPTS=--http_root /tv --satip_xml http://192.168.178.22:8875/satip.xml --satip_xml http://10.0.59.2:9981/satip_server/desc.xml
+    volumes:
+      - /media/docker-tvheadend/config:/config
+      - /media/docker-tvheadend/upload.sh:/upload.sh
+      - /media/docker-tvheadend/picons:/picons
+      - /NAS/Public/Recordings/:/recordings
+    ports:
+      - 9981:9981
+      - 9982:9982
+    restart: unless-stopped
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST}
+
+  oscam:
+    image: lscr.io/linuxserver/oscam
+    container_name: oscam
+    network_mode: host
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Vienna
+    volumes:
+      - /media/docker-tvheadend/oscam:/config
+    devices:
+      - /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A9047XMI-if00-port0:/dev/ttyUSB0
+    restart: unless-stopped
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GL_HOST}

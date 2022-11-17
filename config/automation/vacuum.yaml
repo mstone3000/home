@@ -1,0 +1,41 @@
+
+- id: vacuum_cleaner_error
+  alias: Vacuum Cleaner Error
+  trigger:
+    - platform: state
+      entity_id: sensor.vacuum_cleaner_status_sensor
+      to: 'Error'
+    - platform: state
+      entity_id: sensor.vacuum_cleaner_status_sensor
+      to: 'In Error'
+    - platform: state
+      entity_id: sensor.vacuum_cleaner_status_sensor
+      to: 'Charging Error'
+  action:
+    - service: notify.mobile_app_iphone_xs
+      data:
+        title: 'Staubsauger Fehler!'
+        message: >-
+          {% if is_state('sensor.vacuum_cleaner_error_sensor', 'No Error')  %}
+            {{ '\uD83D\uDE4B' }}{{states.sensor.vacuum_cleaner_status_sensor.state}}
+          {% else %}
+            {{ '\uD83D\uDE4B' }}{{states.sensor.vacuum_cleaner_error_sensor.state}}
+          {% endif %}
+          
+- alias: Start the Vacuum
+  trigger:
+    platform: event
+    event_type: ios.notification_action_fired
+    event_data:
+      actionName: START_VACUUM
+  action:
+    - data:
+        message: "{{ '\uD83D\uDE4B' }} Staubsauger gestartet!"
+        data:
+          apns_headers:
+            'apns-collapse-id': 'vacuum-started'
+      service: notify.mobile_app_iphone_xs
+    - data:
+        message: "{{ '\uD83D\uDE4B' }} Staubsauger gestartet!"
+        title: "Home"
+      service: notify.html5

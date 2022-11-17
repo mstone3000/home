@@ -1,0 +1,2048 @@
+- id: '1591647925974'
+  alias: Update Available
+  description: ''
+  trigger:
+  - entity_id: sensor.available_version
+    platform: state
+  condition:
+  - condition: template
+    value_template: '{{  states(''sensor.installed_version'')  !=  states(''sensor.available_version'')}}'
+  action:
+  - data: {}
+    entity_id: input_boolean.update_available
+    service: input_boolean.turn_on
+  mode: single
+- id: '1591649818040'
+  alias: Update Notification
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: input_boolean.update_available
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: input_boolean.update_available
+    state: 'on'
+  - after: '11:00'
+    before: '22:00'
+    condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    - sat
+    - sun
+  action:
+  - data:
+      message: Update Available
+    service: notify.mobile_app_iphone_xs
+  - data: {}
+    entity_id: input_boolean.update_available
+    service: input_boolean.turn_off
+  mode: single
+- id: '1595310838833'
+  alias: Ports Sperren
+  description: ''
+  trigger:
+  - entity_id: switch.firewall_ports
+    for: 02:00:00
+    from: '1'
+    platform: state
+    to: '0'
+  condition: []
+  action:
+  - data: {}
+    entity_id: switch.firewall_ports
+    service: homeassistant.turn_on
+  mode: single
+- id: WohnzimmerHueRemoteOff
+  alias: Wohnzimmer Hue Remote Off
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: d67691635c41459c8f919df0c4b53a79
+    type: action
+    subtype: off-press
+    discovery_id: 0x0017880102c1435f action_off-press
+  condition: []
+  action:
+  - data:
+      entity_id: light.eingang
+    service: homeassistant.turn_off
+  - data:
+      entity_id: light.hue_lightstrip_1
+    service: homeassistant.turn_off
+  - data:
+      entity_id: light.hue_lightstrip_2
+    service: homeassistant.turn_off
+  - data:
+      entity_id: light.couch
+    service: homeassistant.turn_off
+  - service: homeassistant.turn_off
+    data: {}
+    entity_id: light.hue_iris_1
+  - data:
+      entity_id: light.stiegen_led
+    service: homeassistant.turn_off
+  - service: light.turn_off
+    data: {}
+    entity_id: light.hue_play_gradient_lightstrip_1
+  - data:
+      entity_id: switch.dach_steckerleiste
+    service: homeassistant.turn_off
+  mode: single
+- id: WohnzimmerHueRemoteLongOffs
+  alias: Wohnzimmer Hue Remote Hold Off
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: d67691635c41459c8f919df0c4b53a79
+    type: action
+    subtype: off-hold
+    discovery_id: 0x0017880102c1435f action_off-hold
+  condition: []
+  action:
+  - data:
+      entity_id: light.eingang
+    service: homeassistant.turn_off
+  - data: {}
+    service: homeassistant.turn_off
+    target:
+      entity_id: light.kuche_unterboden
+  - data:
+      entity_id: light.kueche_licht
+    service: homeassistant.turn_off
+  - data:
+      entity_id: light.kuchenlampe
+    service: homeassistant.turn_off
+  - data:
+      entity_id: light.stiegen_led
+    service: homeassistant.turn_off
+  - data:
+      entity_id: light.hue_iris_1
+    service: homeassistant.turn_off
+  - service: homeassistant.turn_off
+    data: {}
+    target:
+      entity_id: light.esstisch
+  mode: single
+- id: wohnzimmerhueremotedimmer
+  alias: Wohnzimmer Hue Remote Dimmer
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: d67691635c41459c8f919df0c4b53a79
+    type: action
+    subtype: down-press
+    discovery_id: 0x0017880102c1435f action_down-press
+  condition: []
+  action:
+  - data_template:
+      brightness: '{% set n = states.light.couch.attributes.brightness - 50 %} {%
+        if n < 0 %} 1{% else %}{{ n }}{% endif %}'
+      entity_id: light.couch
+      transition: '1'
+    service: light.turn_on
+  - data_template:
+      brightness: '{% set n = states.light.hue_play_gradient_lightstrip_1.attributes.brightness
+        - 50 %} {% if n < 0 %} 1{% else %}{{ n }}{% endif %}'
+      entity_id: light.hue_play_gradient_lightstrip_1
+      transition: '1'
+    service: light.turn_on
+  - data_template:
+      brightness: '{% set n = states.light.eingang.attributes.brightness - 50 %} {%
+        if n < 0 %} 1{% else %}{{ n }}{% endif %}'
+      entity_id: light.eingang
+      transition: '1'
+    service: light.turn_on
+  - data_template:
+      brightness: '{% set n = states.light.hue_iris_1.attributes.brightness - 50 %}
+        {% if n < 0 %} 1{% else %}{{ n }}{% endif %}'
+      entity_id: light.hue_iris_1
+      transition: '1'
+    service: light.turn_on
+  mode: single
+- id: WohnzimmerHueRemoteHoldOn
+  alias: Wohnzimmer Hue Remote Hold On
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: d67691635c41459c8f919df0c4b53a79
+    type: action
+    subtype: on-hold
+    discovery_id: 0x0017880102c1435f action_on-hold
+  condition: []
+  action:
+  - data:
+      entity_id: light.eingang
+    service: homeassistant.turn_on
+  - data:
+      entity_id: light.couch
+    service: homeassistant.turn_on
+  - data:
+      entity_id: light.hue_iris_1
+    service: homeassistant.turn_on
+  - data:
+      entity_id: light.stiegen_led
+    service: homeassistant.turn_on
+  - data:
+      entity_id: light.hue_play_gradient_lightstrip_1
+    service: homeassistant.turn_on
+  mode: single
+- id: WohnzimmerHueRemoteOn
+  alias: Wohnzimmer Hue Remote On
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: d67691635c41459c8f919df0c4b53a79
+    type: action
+    subtype: on-press
+    discovery_id: 0x0017880102c1435f action_on-press
+  condition: []
+  action:
+  - data:
+      entity_id: light.couch
+    service: homeassistant.turn_on
+  - service: homeassistant.turn_on
+    data:
+      entity_id: light.hue_play_gradient_lightstrip_1
+  mode: single
+- id: SchlafzimmerHueRemoteOff
+  alias: Schlafzimmer Hue Remote Off
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: e23a63ab6fd0857209a73745aff04c55
+    type: action
+    subtype: off-press
+    discovery_id: 0x001788011039dcd5 action_off-press
+  condition: []
+  action:
+  - service: light.turn_off
+    data: {}
+    target:
+      area_id:
+      - bad
+      - 33c36942dd6b42dab19b89e8f79cf283
+      - 377088bc12794e5b9d9fc26078bd3363
+      - 59778421154849c29df03492199ed95d
+      - a07737151b114f8bae53479c93fbb180
+      - fd48a780ce42455aa96de8588f22c14b
+      - aace5f17666368ac4206c8b0932b1951
+      - dc5220d2667f400780ae4e884a9b8c94
+      - b2ba2065034c11eb97fa93a6fe5cf69f
+      - 4e9f52e2a34c4457b1b6c68b6bfd51ee
+  mode: single
+- id: '1595573494567'
+  alias: Arbeit
+  description: ''
+  trigger:
+  - entity_id: person.manuel
+    event: enter
+    platform: zone
+    zone: zone.arz
+  condition: []
+  action:
+  - device_id: 8056c440cf15480ea071b697e39ea82b
+    domain: light
+    entity_id: light.eingang
+    type: turn_off
+  mode: single
+- id: wohnzimmerhueremotebrighter
+  alias: Wohnzimmer Hue Remote Brighter
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: d67691635c41459c8f919df0c4b53a79
+    type: action
+    subtype: up-press
+    discovery_id: 0x0017880102c1435f action_up-press
+  condition: []
+  action:
+  - data_template:
+      brightness: '{% set n = states.light.couch.attributes.brightness + 50 %} {%
+        if n > 255 %} 255{% else %}{{ n }}{% endif %}'
+      entity_id: light.couch
+      transition: '1'
+    service: light.turn_on
+  - data_template:
+      brightness: '{% set n = states.light.hue_play_gradient_lightstrip_1.attributes.brightness
+        + 50 %} {% if n > 255 %} 255{% else %}{{ n }}{% endif %}'
+      entity_id: light.hue_play_gradient_lightstrip_1
+    service: light.turn_on
+  - data_template:
+      brightness: '{% set n = states.light.hue_iris_1.attributes.brightness + 50 %}
+        {% if n > 255 %} 255{% else %}{{ n }}{% endif %}'
+      entity_id: light.hue_iris_1
+    service: light.turn_on
+  - data_template:
+      brightness: '{% set n = states.light.eingang.attributes.brightness + 50 %} {%
+        if n > 255 %}255{% else %}{{ n }}{% endif %}'
+      entity_id: light.eingang
+      transition: '1'
+    service: light.turn_on
+  mode: single
+- id: '1595967082662'
+  alias: Heimkommen
+  description: ''
+  trigger:
+  - entity_id: person.manuel
+    event: enter
+    platform: zone
+    zone: zone.home
+  condition: []
+  action:
+  - data: {}
+    entity_id: switch.firewall_ports
+    service: homeassistant.turn_on
+  mode: single
+- id: '1597233774273'
+  alias: MittagsTimer
+  description: ARZ
+  trigger:
+  - entity_id: device_tracker.iphone_xs
+    for:
+      minutes: 25
+    from: ARZ
+    platform: state
+    to: not_home
+  condition:
+  - after: 09:00
+    before: '15:00'
+    condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+  action:
+  - data:
+      message: Du hast noch 5 Minuten Mittag!
+      title: ARZ Mittagspause
+    service: notify.mobile_app_iphone_xs
+  mode: single
+- id: '1139335329837'
+  alias: Webhook Fail2ban IP
+  description: Webhook for Fail2ban Actions
+  trigger:
+  - platform: webhook
+    webhook_id: !secret webhook_fail2ban
+  condition:
+  - condition: not
+    conditions:
+    - condition: template
+      value_template: !secret privateIPs
+      alias: privateIPs
+  action:
+  - alias: Set Input with IP
+    service: input_text.set_value
+    data:
+      value: '{{ trigger.json.event.key_tuple[0] }}'
+    target:
+      entity_id: input_text.fail2ban_ip
+  - alias: trigger ban for ip
+    service: shell_command.ban_ip
+    data: {}
+    enabled: true
+  - alias: Persistent Notif
+    service: persistent_notification.create
+    data:
+      message: '{{ trigger.json.event.key_tuple[0] }}'
+    enabled: false
+  mode: restart
+- id: '2239335329877'
+  alias: Webhook Fail2unban IP
+  description: Webhook for Fail2unban Actions
+  mode: restart
+  trigger:
+  - platform: webhook
+    webhook_id: !secret webhook_fail2unban
+  action:
+  - alias: Set Input with IP
+    service: input_text.set_value
+    data:
+      value: '{{ trigger.json.ip }}'
+    target:
+      entity_id: input_text.fail2ban_ip
+  - alias: trigger unban for ip
+    service: shell_command.unban_ip
+- id: '1159331399837'
+  alias: Webhook SATIP
+  description: Webhook for SATIP Alerts
+  mode: restart
+  trigger:
+  - platform: webhook
+    webhook_id: satip
+  action:
+  - alias: Notify SATIP error
+    service: notify.mobile_app_iphone_xs
+    data:
+      message: SATIP {{ trigger.json.message }} !!
+- id: '3959331399837'
+  alias: Webhook SATIP Records
+  description: Webhook for SATIP Records
+  mode: restart
+  trigger:
+  - platform: webhook
+    webhook_id: satiprecord
+  action:
+  - alias: Set Input with File
+    service: input_text.set_value
+    data:
+      value: '{{ trigger.json.file }}'
+    target:
+      entity_id: input_text.tvrecording
+  - alias: Set Input with File
+    service: input_text.set_value
+    data:
+      value: '{{ trigger.json.file }}'
+    target:
+      entity_id: input_text.tvrecording
+  - alias: trigger file upload
+    service: shell_command.send_to_youtube
+- id: '1599651890837'
+  alias: Webhook Grafana
+  description: Webhook for Grafana Alerts
+  trigger:
+  - platform: webhook
+    webhook_id: grafana
+  condition: []
+  action:
+  - data_template:
+      message: 'Grafana: {{ trigger.json.message }}'
+    service: notify.html5
+  - data_template:
+      message: 'Grafana: {{ trigger.json.message }}'
+    service: notify.mobile_app_iphone_xs
+  mode: single
+- id: '1553379275650'
+  alias: Start HomeAssistant
+  trigger:
+  - platform: homeassistant
+    event: start
+  action:
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 30
+      milliseconds: 0
+  - service: homeassistant.turn_on
+    data: {}
+    target:
+      entity_id: group.light_automations
+    enabled: false
+  mode: single
+- id: '1600273826417'
+  alias: Lightning Detected
+  description: ''
+  trigger:
+  - entity_id:
+    - sensor.blitzortung_lightning_counter
+    from: '0'
+    platform: state
+  condition:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.manuel
+      state: home
+  action:
+  - data:
+      message: Blitzeinschlag! ⚡
+      title: Unwetter
+      data:
+        attachment:
+          url: https://mobile.aldis.at/livedata/aldisMobileLiveImage.jpg
+          content-type: gif
+          hide-thumbnail: false
+    service: notify.mobile_app_iphone_xs
+  - data: {}
+    entity_id: automation.lightning_detected
+    service: automation.turn_off
+  mode: single
+- id: '1600695729903'
+  alias: Reset Automations Midnight
+  description: ''
+  trigger:
+  - platform: time
+    at: 00:00:00
+  - platform: homeassistant
+    event: start
+  condition: []
+  action:
+  - service: automation.turn_on
+    data: {}
+    entity_id: automation.lightning_detected
+  mode: single
+- id: '1601284505865'
+  alias: Heizung Wohnzimmer trigger second relay ON
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: switch.wohnzimmer_1_heizung
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - service: homeassistant.turn_on
+    data: {}
+    entity_id: switch.wohnzimmer_2_heizung
+  mode: single
+- id: '1601284622290'
+  alias: Heizung Wohnzimmer trigger second relay OFF
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: switch.wohnzimmer_1_heizung
+    from: 'on'
+    to: 'off'
+  condition: []
+  action:
+  - service: homeassistant.turn_off
+    data: {}
+    entity_id: switch.wohnzimmer_2_heizung
+  mode: single
+- id: '1601381770298'
+  alias: Dach Steckerleiste
+  description: ''
+  trigger:
+  - device_id: df1a0079018311eb92fd8d103e467f51
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+  condition: []
+  action:
+  - service: homeassistant.toggle
+    data: {}
+    entity_id: switch.dach
+  mode: single
+- id: '1601417702779'
+  alias: Dach Heller
+  description: ''
+  trigger:
+  - device_id: df1a0079018311eb92fd8d103e467f51
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: dim_up
+  condition: []
+  action:
+  - service: light.turn_on
+    data: {}
+    entity_id: light.dach_hue_go
+  - service: light.turn_on
+    entity_id: light.dach_hue_go
+    data_template:
+      brightness: '{% set suggested = states.light.dach_hue_go.attributes.brightness|int
+        + 5 %} {% if suggested < 200 %} {{ suggested }} {% else %} 200 {% endif %}
+
+        '
+  mode: single
+- id: '1601417836104'
+  alias: Dach Dunkler
+  description: ''
+  trigger:
+  - device_id: df1a0079018311eb92fd8d103e467f51
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: dim_down
+  condition: []
+  action:
+  - service: light.turn_on
+    entity_id: light.dach_hue_go
+    data_template:
+      brightness: '{% set suggested = states.light.dach_hue_go.attributes.brightness|int
+        - 5 %} {% if suggested > 5 %} {{ suggested }} {% else %} 5 {% endif %}
+
+        '
+  mode: single
+- id: '1603352518844'
+  alias: Schlafzimmer Auto Aus
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: light.schlafzimmer_licht
+    to: 'On'
+    for: 00:10:00
+  condition: []
+  action:
+  - service: homeassistant.turn_off
+    data: {}
+    entity_id: light.schlafzimmer_licht
+  mode: single
+- id: '1611157958162'
+  alias: TV Einschalten
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - media_player.lg_tv
+    from: 'off'
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 20
+  condition:
+  - condition: state
+    entity_id: switch.huesync
+    state: 'off'
+  action:
+  - service: shell_command.restart_hyperion
+    data: {}
+    enabled: false
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 2
+      milliseconds: 0
+    enabled: false
+  - service: homeassistant.turn_on
+    data: {}
+    target:
+      entity_id: switch.huesync
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 2
+      milliseconds: 0
+  - service: homeassistant.turn_on
+    data: {}
+    target:
+      entity_id: switch.piccap
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 2
+      milliseconds: 0
+  mode: single
+- id: '1611158071624'
+  alias: TV Ausschalten
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: media_player.lg_tv
+    from: 'on'
+    to: 'off'
+    for: 00:00:10
+  condition:
+  - condition: state
+    entity_id: switch.huesync
+    state: 'on'
+  action:
+  - service: homeassistant.turn_off
+    data: {}
+    target:
+      entity_id: switch.huesync
+  - service: media_player.turn_off
+    data: {}
+    target:
+      entity_id: media_player.wohnzimmer
+  mode: single
+- id: '1612296669959'
+  alias: PS5 HDMI Aktiviert
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: media_player.lg_tv
+    attribute: source
+    to: PS5
+    for: 00:00:10
+  condition: []
+  action:
+  - service: homeassistant.turn_on
+    data: {}
+    entity_id: switch.ps5_sync
+  mode: single
+- id: '1612979010047'
+  alias: PS5 Sync Stop
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: media_player.lg_tv
+    attribute: source
+    from: PS5
+  condition: []
+  action:
+  - service: homeassistant.turn_off
+    data: {}
+    entity_id: switch.ps5_sync
+  mode: single
+- id: '1613795124869'
+  alias: TV Einschalten Nacht
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: media_player.lg_tv
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: sun
+    before: sunrise
+    after: sunset
+  action:
+  - service: homeassistant.turn_on
+    data: {}
+    entity_id: light.couch
+  - service: homeassistant.turn_on
+    data:
+      brightness_pct: 5
+      entity_id: light.hue_play_gradient_lightstrip_1
+  mode: single
+- id: '1615022504467'
+  alias: Alert VPN
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: device_tracker.julia_raspberry
+    from: not_home
+    to: home
+  condition: []
+  action:
+  - service: notify.mobile_app_iphone_xs
+    data:
+      message: '{{ trigger.to_state.name }}'
+      title: VPN Client Verbunden
+  mode: single
+- id: '1616002405478'
+  alias: Office Bewegung Aus
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.office_sensor_occupancy
+    from: 'on'
+    to: 'off'
+    for:
+      hours: 0
+      minutes: 35
+      seconds: 0
+  condition: []
+  action:
+  - service: light.turn_off
+    target:
+      entity_id:
+      - light.office
+  mode: single
+- id: '1616007141211'
+  alias: Office Bewegung
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.office_sensor_occupancy
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: or
+    conditions:
+    - condition: sun
+      after: sunset
+      after_offset: -01:00:00
+    - condition: sun
+      before: sunrise
+      before_offset: 01:00:00
+    - condition: numeric_state
+      entity_id: sensor.wohnzimmer_sensor_illuminance
+      below: '10'
+  - condition: state
+    entity_id: light.hue_color_lamp_1
+    state: 'off'
+  - condition: state
+    entity_id: light.bildschirm_lampe
+    state: 'off'
+  - condition: state
+    entity_id: light.hue_color_lamp_1
+    state: 'off'
+  action:
+  - service: light.turn_on
+    data:
+      transition: 10
+      brightness_pct: 40
+    target:
+      entity_id: light.hue_color_lamp_1
+  - service: light.turn_on
+    target:
+      entity_id: light.color_light_1
+    data:
+      brightness_pct: 15
+      transition: 10
+  mode: single
+- id: '1617220517178'
+  alias: Object Detection
+  description: ''
+  trigger:
+  - platform: event
+    event_type: deepstack.object_detected
+    event_data:
+      name: person
+  condition: []
+  action:
+  - data_template:
+      caption: New person detection with confidence {{ trigger.event.data.confidence
+        }}
+      file: '{{ trigger.event.data.saved_file  }}'
+    service: telegram_bot.send_photo
+  mode: single
+- id: '1618216835594'
+  alias: Wetterwarnung
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.meteoalarmeu
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - service: notify.mobile_app_iphone_xs
+    data:
+      message: '{{ state_attr("binary_sensor.meteoalarmeu", "message") }}'
+      title: Wetterwarnung
+  mode: single
+- id: '1621094717937'
+  alias: Amp Off
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: media_player.ibkwohnzimmer
+    from: playing
+    to: paused
+    for: 00:30
+  condition:
+  - condition: state
+    entity_id: media_player.lg_tv
+    state: 'off'
+  action:
+  - service: homeassistant.turn_on
+    target:
+      entity_id: switch.ampoff
+  mode: single
+- id: '1637887547270'
+  alias: Wohnzimmer Bewegung aus
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.wohnzimmer_sensor_occupancy
+    from: 'on'
+    to: 'off'
+    for:
+      hours: 0
+      minutes: 15
+      seconds: 0
+  condition:
+  - condition: state
+    entity_id: input_boolean.kinomodus
+    state: 'off'
+  action:
+  - service: homeassistant.turn_off
+    target:
+      entity_id:
+      - light.stiegen_led
+      - light.kuche_unterboden
+      - light.hue_iris_1
+      - light.esstisch
+    data: {}
+  mode: single
+- id: '1638296854149'
+  alias: Hue Sync On
+  description: ''
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: d67691635c41459c8f919df0c4b53a79
+    type: action
+    subtype: up-hold
+    discovery_id: 0x0017880102c1435f action_up-hold
+  condition:
+  - condition: state
+    entity_id: media_player.lg_tv
+    state: 'on'
+  action:
+  - service: homeassistant.toggle
+    target:
+      entity_id: switch.huewin
+  mode: single
+- id: '1638296935441'
+  alias: Hue Sync Off
+  description: ''
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: d67691635c41459c8f919df0c4b53a79
+    type: action
+    subtype: down-hold
+    discovery_id: 0x0017880102c1435f action_down-hold
+  condition:
+  - condition: state
+    entity_id: media_player.lg_tv
+    state: 'on'
+  action:
+  - service: homeassistant.toggle
+    target:
+      entity_id: switch.huewin
+  mode: single
+- id: '1640089415832'
+  alias: HeatingPi Restart on Connection Lost
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: device_tracker.raspberry_pi_foundation_eb_09_74
+    from: home
+    to: not_home
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 05999cd63c486b7182b458475c0185e9
+    entity_id: switch.tradfri_outlet_4
+    domain: switch
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+      milliseconds: 0
+  - type: turn_on
+    device_id: 05999cd63c486b7182b458475c0185e9
+    entity_id: switch.tradfri_outlet_4
+    domain: switch
+  mode: single
+- id: '1641812609636'
+  alias: Dach Netz restart
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: device_tracker.raspberry_pi_foundation_1a_56_28
+    from: home
+    to: not_home
+    for:
+      hours: 0
+      minutes: 2
+      seconds: 0
+  - platform: state
+    entity_id: switch.dach_strom
+    from: 'on'
+    to: 'off'
+    for:
+      hours: 0
+      minutes: 3
+      seconds: 0
+  condition: []
+  action:
+  - service: switch.turn_off
+    target:
+      entity_id: switch.dach_strom
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 20
+      milliseconds: 0
+  - service: switch.turn_on
+    target:
+      entity_id: switch.dach_strom
+  mode: single
+- id: '1642102642670'
+  alias: Office Tür Öffnen
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.office_tuere_contact
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: and
+    conditions:
+    - condition: state
+      entity_id: group.wohnzimmer_licht_group
+      state: 'off'
+    - condition: state
+      entity_id: group.kueche_licht_group
+      state: 'off'
+    - condition: state
+      entity_id: sun.sun
+      state: below_horizon
+  action:
+  - service: light.turn_on
+    target:
+      entity_id: light.couch
+    data:
+      brightness_pct: 100
+      transition: 5
+  - service: light.turn_on
+    target:
+      entity_id: light.kuche_unterboden
+  - service: light.turn_on
+    target:
+      entity_id: light.stiegen_led
+  mode: single
+- id: '1642107348968'
+  alias: Ike remote On/off
+  description: ''
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: e6d79949290de1e86593ba25d8d3bf0c
+    type: action
+    subtype: toggle
+    discovery_id: 0x000d6ffffe1fbc4f action_toggle
+  condition: []
+  action:
+  - service: homeassistant.turn_off
+    target:
+      entity_id:
+      - group.wohnzimmer_licht_group
+      - group.kueche_licht_group
+      - light.bad_deckenlampe
+      - light.bad_hue_bloom
+      - light.spiegel_licht
+  mode: single
+- id: '1642885686767'
+  alias: Wohnzimmer Fenster schließen
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.0x00158d00054d1dbf_contact
+    from: 'on'
+    to: 'off'
+  condition:
+  - condition: and
+    conditions:
+    - condition: numeric_state
+      entity_id: sensor.wohnzimmer_curtain_2_position
+      above: '30'
+    - condition: numeric_state
+      entity_id: sensor.wohnzimmer_curtain_1_position
+      below: '20'
+  action:
+  - service: cover.set_cover_position
+    target:
+      entity_id: cover.wohnzimmer2_curtains
+    data:
+      position: 0
+  mode: single
+- id: '1643295793373'
+  alias: Scrypted Motion Sync Eingang ON
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: input_boolean.eingang_bewegung
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - service: homeassistant.turn_on
+    target:
+      entity_id: switch.eingang_motion_scrypted
+  mode: single
+- id: '1643295829686'
+  alias: Scrypted Motion Sync Eingang OFF
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: input_boolean.eingang_bewegung
+    from: 'on'
+    to: 'off'
+  condition: []
+  action:
+  - service: homeassistant.turn_off
+    target:
+      entity_id: switch.eingang_motion_scrypted
+  mode: single
+- id: '1643457396741'
+  alias: Fernseher WOL
+  trigger:
+  - platform: webostv.turn_on
+    entity_id: media_player.lg_tv
+  action:
+  - service: wake_on_lan.send_magic_packet
+    data:
+      mac: 58-fd-b1-a7-88-db
+      broadcast_address: 10.0.57.255
+- id: '1643538094064'
+  alias: Webhook Media Play Wohnzimmer
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: homepod_wohnzimmer_tts
+  condition: []
+  action:
+  - service: media_player.play_media
+    data:
+      media_content_id: '{{ trigger.json.title }}'
+      media_content_type: music
+    target:
+      entity_id: media_player.homepod_wohnzimmer
+  mode: single
+- id: '1643654739522'
+  alias: TV Apps switch ATV
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: tvapponatv
+  condition: []
+  action:
+  - service: media_player.select_source
+    data:
+      source: '{{ trigger.json.source }}'
+    target:
+      entity_id: media_player.wohnzimmer
+  mode: single
+- id: '1644234734446'
+  alias: Heizung auto aus
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.heizung_keller
+    to: 'off'
+    for:
+      hours: 0
+      minutes: 30
+      seconds: 0
+  condition:
+  - condition: and
+    conditions:
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: climate.bad
+        state: heat
+        for:
+          hours: 1
+          minutes: 30
+          seconds: 0
+      - condition: state
+        entity_id: climate.kueche
+        state: heat
+        for:
+          hours: 1
+          minutes: 30
+          seconds: 0
+      - condition: state
+        entity_id: climate.office
+        state: heat
+        for:
+          hours: 1
+          minutes: 30
+          seconds: 0
+      - condition: state
+        entity_id: climate.schlafzimmer
+        state: heat
+        for:
+          hours: 1
+          minutes: 30
+          seconds: 0
+      - condition: state
+        entity_id: climate.wohnzimmer
+        state: heat
+        for:
+          hours: 1
+          minutes: 30
+          seconds: 0
+    - condition: time
+      after: '21:00:00'
+      before: 05:00
+  action:
+  - service: climate.turn_off
+    data: {}
+    target:
+      entity_id:
+      - climate.bad
+      - climate.kueche
+      - climate.schlafzimmer
+      - climate.office
+      - climate.wohnzimmer
+  mode: single
+- id: '1644517672677'
+  alias: Vorhang Baumschutz
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.balkon_sensor_illuminance_lux
+    above: '10000'
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  condition:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: cover.ble_switchbot_3
+      state: closed
+  action:
+  - service: cover.close_cover
+    data: {}
+    target:
+      entity_id: cover.ble_switchbot_3
+  mode: single
+- id: '1644512673677'
+  alias: Nightvision Pflanzencam Off
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.balkon_sensor_illuminance_lux
+    above: '100'
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  action:
+  - service: homeassistant.turn_off
+    target:
+      entity_id: switch.nightvision_pflanzis
+    data: {}
+- id: '1644514673677'
+  alias: Nightvision Pflanzencam On
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.balkon_sensor_illuminance_lux
+    below: '80'
+    for:
+      hours: 0
+      minutes: 10
+      seconds: 0
+  action:
+  - service: homeassistant.turn_on
+    target:
+      entity_id: switch.nightvision_pflanzis
+    data: {}
+  mode: single
+- id: '1644593583065'
+  alias: Einkaufen
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - device_tracker.iphone_xs
+    to: Merkur
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 30
+  - platform: state
+    entity_id:
+    - device_tracker.iphone_xs
+    to: Hofer
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 30
+  condition:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: sensor.grocery_list
+      state: '""'
+  action:
+  - service: notify.mobile_app_iphone_xs
+    data:
+      title: Beim einkaufen?
+      message: ' {{ states("sensor.grocery_list") }} nicht vergessen!'
+  mode: single
+- id: '1644613311971'
+  alias: Wohnzimmer Bewegung aus KinoModus
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.wohnzimmer_sensor_occupancy
+    from: 'on'
+    to: 'off'
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 15
+  condition:
+  - condition: state
+    entity_id: input_boolean.kinomodus
+    state: 'on'
+  action:
+  - service: homeassistant.turn_off
+    target:
+      entity_id:
+      - light.stiegen_led
+      - light.kuche_unterboden
+      - light.hue_iris_1
+      - light.esstisch
+    data: {}
+  mode: single
+- id: '1644615401899'
+  alias: Media Player Pause
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: media_player.kodi_wohnzimmerpi
+    from: playing
+    to: paused
+  - platform: state
+    entity_id: media_player.lg_tv
+    from: playing
+    to: paused
+  condition:
+  - condition: state
+    entity_id: input_boolean.kinomodus
+    state: 'on'
+  action:
+  - service: homeassistant.turn_off
+    data: {}
+    target:
+      entity_id: input_boolean.kinomodus
+  mode: single
+- id: '1646402175734'
+  alias: Insomnia_Vacuum
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: vacuum.s6_maxv
+    attribute: battery_level
+    to: '100'
+    for:
+      hours: 0
+      minutes: 10
+      seconds: 0
+  condition:
+  - condition: state
+    entity_id: input_boolean.insomnia_vacuum
+    state: 'on'
+  action:
+  - service: script.bad_u_schlafzimmer_saugen
+    data: {}
+  mode: single
+- id: '1653163763566'
+  alias: Bewässerung Webhook ON
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: bewasserung-webhook-on-ZeOtecTF2rPO48Pl2Vi49-xl
+  condition: []
+  action:
+  - service: homeassistant.turn_on
+    data: {}
+    target:
+      entity_id: input_boolean.eve_aqua
+  mode: single
+- id: '1653163791874'
+  alias: Bewässerung Webhook OFF
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: bewasserung-webhook-off-ZeOtecTF2rPO48Pl2Vi49-xh
+  condition: []
+  action:
+  - service: homeassistant.turn_off
+    data: {}
+    target:
+      entity_id: input_boolean.eve_aqua
+  mode: single
+- id: '1653229805606'
+  alias: Office Tür Schließen
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.office_tuere_contact
+    from: 'on'
+    to: 'off'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 3cc164f41f90493c0e19f2cabd6450d5
+    entity_id: switch.klimaanlage
+    domain: switch
+  mode: single
+- id: '1660430893137'
+  alias: Kinomodus Lichter aus
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - input_boolean.kinomodus
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - service: light.turn_off
+    data: {}
+    target:
+      entity_id:
+      - light.bad_deckenlampe
+      - light.bad_hue_bloom
+      - light.hue_color_lamp_1
+      - light.bildschirm_lampe
+      - light.eingang
+      - light.esstisch
+      - light.dach_hue_go
+      - light.hue_iris_1
+      - light.kuche_unterboden
+      - light.klo_lampe
+      - light.kueche_licht
+      - light.licht_speis
+      - light.kuchenlampe
+      - light.color_light_1
+      - light.schlafzimmer_licht
+      - light.spiegel_licht
+      - light.stiegen_led
+  mode: single
+- id: '1261779791891'
+  alias: UpdateWifiList
+  description: ''
+  trigger:
+  - platform: time_pattern
+    minutes: /30
+  condition: []
+  action:
+  - service: shell_command.refresh_wifi
+    data: {}
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 30
+      milliseconds: 0
+  mode: single
+  max_exceeded: silent
+- id: '1661780077523'
+  alias: Cron Device List
+  description: ''
+  trigger:
+  - platform: time_pattern
+    minutes: /5
+  condition: []
+  action:
+  - service: shell_command.wifilistupdate
+    data: {}
+  mode: single
+- id: '1662135072319'
+  alias: Wifi Disassociation Webhook
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: !secret webhook_wifi_disassoc
+  condition: []
+  action:
+  - service: shell_command.wifi_kick_client
+    data_template:
+      mac: '"{{ trigger.query.mac }}"
+
+        '
+      router: '"{{ trigger.query.router }}"
+
+        '
+      iface: '"{{ trigger.query.iface }}"
+
+        '
+  mode: single
+- id: '1662390390629'
+  alias: UpdateWifiListClients
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: !secret webhook_wifi_update
+  condition: []
+  action:
+  - service: homeassistant.update_entity
+    data: {}
+    target:
+      entity_id:
+      - sensor.ap1wifi24devices
+      - sensor.ap1wifi5devices
+      - sensor.ap2wifi24devices
+      - sensor.ap2wifi5devices
+      - sensor.ap3wifi24devices
+      - sensor.ap3wifi5devices
+  mode: single
+  max_exceeded: silent
+- id: '1662394770895'
+  alias: AddToWifiClientList
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: !secret webhook_wifi_assoc
+  condition: []
+  action:
+  - service: shell_command.wifi_add_client
+    data_template:
+      data: '{{ trigger.json }}'
+  mode: single
+  max_exceeded: silent
+- id: '1662664326954'
+  alias: UpdateWifiListClient
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: !secret webhook_wifi_update
+  condition: []
+  action:
+  - service: homeassistant.update_entity
+    data: {}
+    target:
+      entity_id:
+      - sensor.ap{{ router }}wifi{{ freq }}devices
+  mode: single
+  max_exceeded: silent
+- id: '1664376714385'
+  alias: Heizung Auto Ein
+  description: Heizung einschalten wenn Vorlauf heizt
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.heizung_keller
+    from: 'off'
+    to: 'on'
+    for:
+      hours: 0
+      minutes: 10
+      seconds: 0
+  - platform: numeric_state
+    entity_id: sensor.netatmo_innsbruck_aussen_temperature
+    for:
+      hours: 0
+      minutes: 30
+      seconds: 0
+    below: 21
+  condition:
+  - condition: and
+    conditions:
+    - condition: state
+      entity_id: switch.kueche_heizung
+      state: 'off'
+    - condition: state
+      entity_id: switch.bad_heizung
+      state: 'off'
+    - condition: state
+      entity_id: switch.wohnzimmer_1_heizung
+      state: 'off'
+    - condition: time
+      after: '15:00:00'
+      before: '20:30:00'
+      weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+      - sat
+      - sun
+    - condition: numeric_state
+      entity_id: sensor.wohnzimmer_sensor_avg
+      below: 21
+    - condition: numeric_state
+      entity_id: sensor.netatmo_innsbruck_aussen_temperature
+      below: 22
+  action:
+  - service: climate.turn_on
+    data: {}
+    target:
+      entity_id:
+      - climate.bad
+      - climate.kueche
+      - climate.wohnzimmer
+  mode: single
+- id: '1664882533125'
+  alias: Hue Rotary 2
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.hue_rotary_2_action
+  - platform: state
+    entity_id: sensor.hue_rotary_2_action
+    to:
+    for:
+      seconds: 300
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.for | string == ''0:05:00'' }}'
+      sequence:
+      - service: input_number.set_value
+        data:
+          value: 0
+        target:
+          entity_id: input_number.huerotary2current
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.action == ''button_1_hold''}}'
+      sequence:
+      - type: turn_off
+        device_id: 6d1d64fe0f970baa9466d4551ef72478
+        entity_id: light.couch
+        domain: light
+      - type: turn_off
+        device_id: e50980109f7644677c5ef477f11df0f6
+        entity_id: light.hue_play_gradient_lightstrip_1
+        domain: light
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.action == ''button_1_press_release''}}'
+      sequence:
+      - service: input_number.set_value
+        data:
+          value: 0
+        target:
+          entity_id: input_number.huerotary2current
+      - device_id: e50980109f7644677c5ef477f11df0f6
+        domain: light
+        entity_id: light.hue_play_gradient_lightstrip_1
+        type: flash
+      - device_id: 6d1d64fe0f970baa9466d4551ef72478
+        domain: light
+        entity_id: light.couch
+        type: flash
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.action == ''button_2_press_release''}}'
+      sequence:
+      - service: input_number.set_value
+        data:
+          value: 1
+        target:
+          entity_id: input_number.huerotary2current
+      - device_id: 13653624d98288168b05957a264f7791
+        domain: light
+        entity_id: light.esstisch
+        type: flash
+      - device_id: 382881972085905d9214e2cf3b7fa88d
+        domain: light
+        entity_id: light.eingang
+        type: flash
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.action == ''button_2_hold''}}'
+      sequence:
+      - type: turn_off
+        device_id: 13653624d98288168b05957a264f7791
+        domain: light
+        entity_id: light.esstisch
+      - type: turn_off
+        device_id: 382881972085905d9214e2cf3b7fa88d
+        domain: light
+        entity_id: light.eingang
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.action == ''button_3_press''}}'
+      sequence:
+      - service: input_number.set_value
+        data:
+          value: 2
+        target:
+          entity_id: input_number.huerotary2current
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.to_state.attributes.action == ''button_4_press''}}'
+      sequence:
+      - service: input_number.set_value
+        data:
+          value: 3
+        target:
+          entity_id: input_number.huerotary2current
+    - conditions:
+      - condition: template
+        value_template: '{% set current = states(''input_number.huerotary2current'')
+          | float %} {{  current == 0 and ( trigger.to_state.attributes.action ==
+          ''dial_rotate_left_step'' or trigger.to_state.attributes.action == ''dial_rotate_left_slow''
+          or trigger.to_state.attributes.action == ''dial_rotate_left_fast'' ) }}'
+      sequence:
+      - device_id: 6d1d64fe0f970baa9466d4551ef72478
+        domain: light
+        entity_id: light.couch
+        type: brightness_decrease
+      - device_id: e50980109f7644677c5ef477f11df0f6
+        domain: light
+        entity_id: light.hue_play_gradient_lightstrip_1
+        type: brightness_decrease
+    - conditions:
+      - condition: template
+        value_template: '{% set current = states(''input_number.huerotary2current'')
+          | float %} {{  current == 0 and ( trigger.to_state.attributes.action ==
+          ''dial_rotate_right_step'' or trigger.to_state.attributes.action == ''dial_rotate_right_slow''
+          or trigger.to_state.attributes.action == ''dial_rotate_right_fast'' ) }}'
+      sequence:
+      - device_id: 6d1d64fe0f970baa9466d4551ef72478
+        domain: light
+        entity_id: light.couch
+        type: brightness_increase
+      - device_id: e50980109f7644677c5ef477f11df0f6
+        domain: light
+        entity_id: light.hue_play_gradient_lightstrip_1
+        type: brightness_increase
+    - conditions:
+      - condition: template
+        value_template: '{% set current = states(''input_number.huerotary2current'')
+          | float %} {{  current == 1 and ( trigger.to_state.attributes.action ==
+          ''dial_rotate_left_step'' or trigger.to_state.attributes.action == ''dial_rotate_left_slow''
+          or trigger.to_state.attributes.action == ''dial_rotate_left_fast'' ) }}'
+      sequence:
+      - device_id: 13653624d98288168b05957a264f7791
+        domain: light
+        entity_id: light.esstisch
+        type: brightness_decrease
+      - device_id: 382881972085905d9214e2cf3b7fa88d
+        domain: light
+        entity_id: light.eingang
+        type: brightness_decrease
+    - conditions:
+      - condition: template
+        value_template: '{% set current = states(''input_number.huerotary2current'')
+          | float %} {{  current == 1 and ( trigger.to_state.attributes.action ==
+          ''dial_rotate_right_step'' or trigger.to_state.attributes.action == ''dial_rotate_right_slow''
+          or trigger.to_state.attributes.action == ''dial_rotate_right_fast'' ) }}'
+      sequence:
+      - device_id: 13653624d98288168b05957a264f7791
+        domain: light
+        entity_id: light.esstisch
+        type: brightness_increase
+      - device_id: 382881972085905d9214e2cf3b7fa88d
+        domain: light
+        entity_id: light.eingang
+        type: brightness_increase
+  mode: parallel
+  max: 10
+- id: '1664964991731'
+  alias: Max Brightness Lightstrips Kuche
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - light.kuche_unterboden
+    for:
+      seconds: 3
+  condition:
+  - condition: or
+    conditions:
+    - condition: numeric_state
+      entity_id: light.kuche_unterboden
+      attribute: brightness
+      above: 85
+  action:
+  - data:
+      brightness_pct: 84
+      transition: 3
+    service: light.turn_on
+    target:
+      entity_id: light.kuche_unterboden
+  mode: single
+- id: '1664965830874'
+  alias: Gradient Auto Aus
+  description: ''
+  trigger:
+  - platform: device
+    type: turned_on
+    device_id: e50980109f7644677c5ef477f11df0f6
+    entity_id: light.hue_play_gradient_lightstrip_1
+    domain: light
+    for:
+      hours: 0
+      minutes: 20
+      seconds: 0
+  condition:
+  - condition: time
+    after: 06:00:00
+    before: '17:00:00'
+    weekday:
+    - mon
+    - wed
+    - tue
+    - thu
+    - fri
+    - sat
+    - sun
+  action:
+  - service: light.turn_off
+    data: {}
+    target:
+      entity_id: light.hue_play_gradient_lightstrip_1
+  mode: single
+- id: '1666440922272'
+  alias: ATV Wake up
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - media_player.lg_tv
+    attribute: source
+    to: HDMI 1
+  - platform: state
+    entity_id:
+    - media_player.lg_tv
+    to: 'on'
+  condition: []
+  action:
+  - service: media_player.turn_on
+    data: {}
+    target:
+      entity_id: media_player.wohnzimmer
+  mode: single
+- id: '1666648552440'
+  alias: Wohnzimmer Kohlenmonoxid Alarm
+  description: ''
+  trigger:
+  - entity_id: sensor.weather_station_co2
+    platform: numeric_state
+    above: 2000
+    for:
+      minutes: 20
+  condition:
+  - condition: time
+    after: '15:00:00'
+    before: 01:00:00
+  - condition: numeric_state
+    entity_id: sensor.weather_station_co2
+    above: 1200
+  - condition: template
+    value_template: '{{ states.light|selectattr(''state'', ''equalto'', ''on'')|list|length
+      > 2 }}'
+  action:
+  - service: light.turn_on
+    data:
+      flash: short
+    target:
+      entity_id: light.hue_iris_1
+  - delay:
+      minutes: 15
+  mode: single
+- id: '1666788331167'
+  alias: Completed Torrent
+  description: ''
+  trigger:
+  - platform: event
+    event_type: transmission_downloaded_torrent
+  condition: []
+  action:
+  - service: notify.html5
+    data:
+      title: Torrent completed!
+      message: '{{trigger.event.data.name}}'
+  - service: notify.lg
+    data:
+      message: Torrent Complete
+  mode: single
+- id: '1666858569827'
+  alias: Fail2ban Unban IP
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - service: shell_command.unban_ip
+    data: {}
+  mode: single
+- id: '1666887333362'
+  alias: DSM Bewegung Webhook
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: !secret webhook_dsm_motion
+  condition: []
+  action:
+  - service: homeassistant.turn_on
+    data: {}
+    target:
+      entity_id: input_boolean.eingang_bewegung
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 30
+      milliseconds: 0
+  - service: homeassistant.turn_off
+    data: {}
+    target:
+      entity_id: input_boolean.eingang_bewegung
+  mode: restart
+- id: '1666891887981'
+  alias: Wohnzimmer Remote Brighter Hold
+  description: ''
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: d67691635c41459c8f919df0c4b53a79
+    type: action
+    subtype: up-hold
+    discovery_id: 0x0017880102c1435f action_up-hold
+  condition: []
+  action:
+  - service: homeassistant.turn_on
+    data: {}
+    target:
+      entity_id: switch.huesync
+  mode: single
+- id: '1666891927947'
+  alias: Hue Remote Wohnzimmer Dimmer Hold
+  description: ''
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: d67691635c41459c8f919df0c4b53a79
+    type: action
+    subtype: down-hold
+    discovery_id: 0x0017880102c1435f action_down-hold
+  condition: []
+  action:
+  - service: homeassistant.turn_off
+    data: {}
+    target:
+      entity_id: switch.huesync
+  mode: single
+- id: '1666892072374'
+  alias: Eingang Camera Motion Off
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: cameramotionoff
+  condition: []
+  action:
+  - service: homeassistant.turn_off
+    data: {}
+    target:
+      entity_id: input_boolean.eingang_bewegung
+  max_exceeded: silent
+  mode: single
+- id: '1667080267410'
+  alias: Haus Alarm
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - binary_sensor.eingang_motion_sensor
+    to: 'on'
+  - platform: state
+    entity_id:
+    - binary_sensor.wohnzimmer_sensor_occupancy
+    to: 'on'
+  - platform: state
+    entity_id:
+    - binary_sensor.bad_sensor_occupancy
+    to: 'on'
+  - platform: state
+    entity_id:
+    - binary_sensor.kuche_sensor_occupancy
+    to: 'on'
+  - platform: state
+    entity_id:
+    - binary_sensor.0x001788010bcdba40_occupancy
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: alarm_control_panel.alarm
+    state: armed_away
+  action:
+  - service: alarm_control_panel.alarm_trigger
+    data: {}
+    target:
+      entity_id: alarm_control_panel.alarm
+  mode: single
+- id: '1667082801958'
+  alias: Alarm aktiviert
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - alarm_control_panel.alarm
+    to: arming
+  condition: []
+  action:
+  - service: shell_command.speak
+    data: '{"text": "Alarm ist aktiviert"}'
+  mode: single
+- id: '1667082866898'
+  alias: Alarm Deaktiviert
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - alarm_control_panel.alarm
+    to: disarmed
+  condition: []
+  action:
+  - service: shell_command.speak
+    data: '{"text": "Alarm ist deaktiviert"}'
+  mode: single
+- id: '1667134552331'
+  alias: Alarm Ausgelöst
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - alarm_control_panel.alarm
+    to: triggered
+  condition: []
+  action:
+  - repeat:
+      until:
+      - condition: state
+        entity_id: alarm_control_panel.alarm
+        state: disarming
+      sequence:
+      - service: media_player.play_media
+        data:
+          media_content_id: /config/www/wiwi.mp3
+          media_content_type: music
+        target:
+          entity_id:
+          - media_player.homepod_wohnzimmer
+          - media_player.homepod_dach
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 3
+          milliseconds: 0
+  mode: single
+- id: '1667595775815'
+  alias: Schlafzimmer Lichtschalter
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - switch.schlafzimmer_lichtschalter2
+  condition: []
+  action:
+  - service: homeassistant.toggle
+    data: {}
+    target:
+      entity_id: light.schlafzimmer_licht
+  mode: single
+- id: '1667694972104'
+  alias: Telegram Speak
+  description: ''
+  trigger:
+  - platform: event
+    event_type: telegram_command
+    event_data:
+      command: /speak
+  condition: []
+  action:
+  - service: shell_command.speak
+    data: '{"text": "{{ trigger.event.data["args"] | join(" ")}}"}'
+  mode: single
+- id: '1667740101144'
+  alias: Security_Frigate_Notifications
+  description: ''
+  trigger:
+  - platform: mqtt
+    topic: frigate/events
+    payload: new
+    value_template: '{{ value_json.type }}'
+  condition:
+  - '{{ trigger.payload_json[''after''][''label''] == ''bird'' }}'
+  action:
+  - service: notify.mobile_app_iphone_xs
+    data:
+      message: A {{trigger.payload_json["after"]["label"]}} was detected.
+      data:
+        image: !secret frigateimageurl
+        tag: '{{trigger.payload_json["after"]["id"]}}'
+        when: '{{trigger.payload_json["after"]["start_time"]|int}}'
+        entity_id: camera.{{trigger.payload_json["after"]["camera"]}}
+  mode: single
+- id: '1668456755504'
+  alias: Send Web UI persistent notifications to Mobile Devices
+  description: ''
+  use_blueprint:
+    path: EPMatt/persistent_notification_to_mobile.yaml
+    input:
+      mobile_notify_service: service.mobile_app_iphone_xs

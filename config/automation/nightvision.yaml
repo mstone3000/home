@@ -1,0 +1,30 @@
+- alias: Nightvision einschalten
+  trigger:
+    - platform: time_pattern
+      minutes: "/30"
+    - platform: template
+      value_template: "{{ states('sensor.balkon_sensor_illuminance') | int < 60 }}"
+  condition:
+    - condition: template
+      value_template: "{{ states('sensor.balkon_sensor_illuminance') | int < 60 }}"
+    - condition: state
+      entity_id: 'switch.pi_cam_nightvision'
+      state: 'off'
+  action:
+    service: homeassistant.turn_on
+    entity_id: switch.pi_cam_nightvision
+- alias: Nightvision ausschalten
+  trigger:
+    - platform: time_pattern
+      minutes: "/30"
+    - platform: template
+      value_template: "{{ states('sensor.balkon_sensor_illuminance') | int > 60 }}"
+  condition:
+    - condition: template
+      value_template: "{{ states('sensor.balkon_sensor_illuminance') | int > 60 }}"
+    - condition: state
+      entity_id: 'switch.pi_cam_nightvision'
+      state: 'on'
+  action:
+    service: homeassistant.turn_off
+    entity_id: switch.pi_cam_nightvision

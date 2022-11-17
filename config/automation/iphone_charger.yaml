@@ -1,0 +1,16 @@
+- alias: Schnellader einschalten
+  trigger:
+    platform: template
+    value_template: "{{states.sensor.iphone_xs_battery_level.state | int<33}}"
+  action:
+    service: homeassistant.turn_on
+    entity_id: switch.tradfri_outlet_3
+- alias: Schnellader ausschalten
+  trigger:
+    platform: template
+    value_template: "{{states.sensor.iphone_xs_battery_level.state | int>99}}"
+    for:
+      minutes: 10
+  action:
+    service: homeassistant.turn_off
+    entity_id: switch.tradfri_outlet_3

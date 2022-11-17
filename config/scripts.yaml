@@ -1,0 +1,216 @@
+close_curtain_left:
+    sequence:
+      - alias: "Open Curtain 1"
+        service: cover.close_cover
+        data: {}
+        target:
+          entity_id: cover.ble_switchbot_1
+
+
+open_curtain_left:
+    sequence:
+      - alias: "Open Curtain 1"
+        service: cover.open_cover
+        data: {}
+        target:
+          entity_id: cover.ble_switchbot_1
+
+stop_curtain_left:
+    sequence:
+      - alias: "Stop Curtain 2"
+        service: cover.stop_cover
+        data: {}
+        target:
+          entity_id: cover.ble_switchbot_1
+      #- alias: "Stop Curtain 2"
+      #  service: cover.stop_cover
+      #  data: {}
+      #  target:
+      #    entity_id: cover.ble_switchbot_2
+
+set_curtain_left:
+    sequence:
+      - alias: "Set Curtain 1"
+        service: cover.set_cover_position
+        data:
+            position: position
+        target:
+          entity_id: cover.ble_switchbot_1
+      #- alias: "Set Curtain 2"
+      #  service: cover.set_cover_position
+      #  data:
+      #      position: position
+      #  target:
+      #    entity_id: cover.ble_switchbot_2
+
+close_curtain_right:
+    sequence:
+      - alias: "Close Curtain 3"
+        service: cover.close_cover
+        data: {}
+        target:
+          entity_id: cover.ble_switchbot_3
+      - alias: "Close Curtain 4"
+        service: cover.close_cover
+        data: {}
+        target:
+          entity_id: cover.ble_switchbot_4
+
+
+open_curtain_right:
+    sequence:
+      - alias: "Open Curtain 4"
+        service: cover.open_cover
+        data: {}
+        target:
+          entity_id: cover.ble_switchbot_4
+      - alias: "Open Curtain 3"
+        service: cover.open_cover
+        data: {}
+        target:
+          entity_id: cover.ble_switchbot_3
+
+stop_curtain_right:
+    sequence:
+      - alias: "Stop Curtain 3"
+        service: cover.stop_cover
+        data: {}
+        target:
+          entity_id: cover.ble_switchbot_3
+      - alias: "Stop Curtain 4"
+        service: cover.stop_cover
+        data: {}
+        target:
+          entity_id: cover.ble_switchbot_4
+        
+set_curtain_right:
+    sequence:
+      - alias: "Set Curtain 3"
+        service: cover.set_cover_position
+        data:
+            position: position
+        target:
+          entity_id: cover.ble_switchbot_3
+      - alias: "Set Curtain 4"
+        service: cover.set_cover_position
+        data:
+            position: position
+        target:
+          entity_id: cover.ble_switchbot_4
+
+'20200112215400':
+  alias: Blink Camera Snapshot Dach
+  sequence:
+  - data:
+      name: DachCam  # IMPORTANT: name of camera as defined in the blink app not in Home Assistant
+    service: blink.trigger_camera
+  - delay: 00:00:05
+  - service: blink.blink_update
+  - data:
+      filename: /media/webcam/blink/snapshot/still_image.jpg  # where you want to store still image
+    entity_id: camera.blink_dach  #entity id of blink camera as defined in Home Assistant
+    service: camera.snapshot
+
+snap_picture:
+  alias: Snap picture
+  mode: single
+  sequence:
+  - entity_id: camera.blink_dach
+    service: blink.trigger_camera
+  - delay: 00:00:05
+  - data: {}
+    service: blink.blink_update
+  - data:
+      entity_id: camera.blink_dach
+      filename: /config/www/dach/snap.jpg
+    service: camera.snapshot
+
+esstisch_saugen:
+  mode: single
+  sequence:
+    service: xiaomi_miio.vacuum_clean_zone
+    data:
+      zone:
+        - - 23286
+          - 21239
+          - 26946
+          - 24943
+      repeats: 1
+    target:
+      entity_id: vacuum.s6_maxv
+
+kueche_saugen:
+  mode: single
+  sequence:
+    service: xiaomi_miio.vacuum_clean_zone
+    data:
+      zone:
+        - - 21832
+          - 24761
+          - 24627
+          - 26424
+      repeats: 1
+    target:
+      entity_id: vacuum.s6_maxv
+
+wohnzimmer_saugen:
+  mode: single
+  sequence:
+    service: xiaomi_miio.vacuum_clean_zone
+    data:
+      zone:
+        - - 19345
+          - 20931
+          - 27058
+          - 24635
+        - - 20631
+          - 24285
+          - 25828
+          - 26480
+        - - 24850
+          - 24173
+          - 28651
+          - 26815
+      repeats: 1
+    target:
+      entity_id: vacuum.s6_maxv
+
+bad_u_schlafzimmer_saugen:
+  mode: single
+  sequence:
+    service: xiaomi_miio.vacuum_clean_zone
+    data:
+      zone:
+        - - 26854
+          - 20029
+          - 32042
+          - 24341
+        - - 27971
+          - 24110
+          - 32555
+          - 26276
+      repeats: 3
+    target:
+      entity_id: vacuum.s6_maxv
+
+schlafzimmer_saugen:
+  mode: single
+  sequence:
+    service: xiaomi_miio.vacuum_clean_zone
+    data:
+      zone:
+        - - 26954
+          - 20531
+          - 31641
+          - 24187
+      repeats: 3
+    target:
+      entity_id: vacuum.s6_maxv
+
+sauger_ausleeren:
+  mode: single
+  sequence:
+    service: xiaomi_miio.vacuum_goto
+    data: { "x_coord": 23273,"y_coord": 25576 }
+    target:
+      entity_id: vacuum.s6_maxv

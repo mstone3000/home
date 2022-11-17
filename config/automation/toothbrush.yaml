@@ -1,0 +1,50 @@
+- alias: Zahnbürste Batterie leer
+  trigger:
+      - platform: numeric_state
+        entity_id: sensor.oral_b_battery
+        below: 60
+      - platform: time
+        # Military time format. This trigger will fire at 3:32 PM
+        at: "13:00:00"
+  condition:
+    condition: and
+    conditions:
+      - alias: "Time 11~18"
+        condition: time
+        # At least one of the following is required.
+        after: "11:00:00"
+        before: "18:00:00"
+      - condition: numeric_state
+        entity_id: sensor.oral_b_battery
+        below: 60
+  action:
+    - data:
+        entity_id: switch.tradfri_outlet_6
+      service: homeassistant.turn_on
+      
+- alias: Zahnbürste Batterie aufgeladen
+  trigger:
+      platform: state
+      entity_id: sensor.oral_b
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.oral_b_battery
+      above: 95
+  action:
+    - data:
+        entity_id: switch.tradfri_outlet_6
+      service: homeassistant.turn_off
+
+- alias: Zahnbürste Updaten
+  trigger:
+      platform: time
+      at: "12:50:00"
+  action:
+    - data:
+        entity_id: switch.tradfri_outlet_6
+      service: homeassistant.toggle
+    - delay: 
+        seconds: 20
+    - data:
+        entity_id: switch.tradfri_outlet_6
+      service: homeassistant.toggle

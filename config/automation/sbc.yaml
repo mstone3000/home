@@ -1,0 +1,44 @@
+- alias: HomeAssistant too hot
+  trigger:
+      platform: numeric_state
+      entity_id: sensor.cpu_temp
+      above: 75
+  action:
+  - data:
+      message: "{{ '\uD83D\uDD25' }} HAPi too hot: {{ states.sensor.cpu_temp.state | round(2) }}°C"
+      data:
+        apns_headers:
+          apns-collapse-id: odroid-too-hot
+    service: notify.manuel
+  - data:
+      message: "{{ '\uD83D\uDD25' }} HAPi too hot: {{ states.sensor.cpu_temp.state | round(2) }}°C"
+    service: notify.html5
+- alias: HeatingPi too hot
+  trigger:
+      platform: numeric_state
+      entity_id: sensor.hosttemperature_heatingpi
+      above: 80
+  action:
+  - data:
+      message: "{{ '\uD83D\uDD25' }} HeatingPi too hot: {{ states.sensor.hosttemperature_heatingpi.state | round(2) }}°C"
+    service: notify.manuel
+  - data:
+      message: "{{ '\uD83D\uDD25' }} HeatingPi too hot: {{ states.sensor.hosttemperature_heatingpi.state | round(2) }}°C"
+    service: notify.html5
+- alias: Reboot Heating Pi
+  trigger:
+      - platform: time
+        at: "12:00:00"
+      - platform: state
+        entity_id: switch.tradfri_outlet_4
+        for:
+          seconds: 10
+        to: "off"
+  action:
+  - data:
+      entity_id: switch.tradfri_outlet_4
+    service: homeassistant.turn_off
+  - delay: "00:00:30"
+  - data:
+      entity_id: switch.tradfri_outlet_4
+    service: homeassistant.turn_on

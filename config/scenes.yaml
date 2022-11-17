@@ -1,0 +1,77 @@
+- id: '1595599533763'
+  name: Wohnung aus
+  entities:
+    light.bad_hue_bloom:
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Bad Hue Bloom
+      state: 'off'
+      supported_features: 61
+    light.bad_deckenlampe:
+      friendly_name: Bad Licht
+      state: 'off'
+      supported_features: 41
+    light.dach_hue_go:
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Dach Hue Go
+      max_mireds: 500
+      min_mireds: 153
+      state: 'off'
+      supported_features: 63
+    light.hue_iris_1:
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Hue iris 1
+      state: 'off'
+      supported_features: 61
+    light.kasten_lampe:
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Kasten Lampe
+      state: 'off'
+      supported_features: 61
+    light.klo_lampe:
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Klo Licht Ikealampe
+      state: 'off'
+      supported_features: 61
+    light.kuchenlampe:
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Küchenlampe
+      state: 'off'
+      supported_features: 61
+    light.schlafzimmer_licht:
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Schlafzimmer Licht
+      state: 'off'
+      supported_features: 61
+    light.wohnzimmer_lightstrip_1:
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Lightstrip 1
+      state: 'off'
+      supported_features: 61
+    light.wohnzimmer_lightstrip_2:
+      effect_list:
+      - colorloop
+      - random
+      friendly_name: Lightstrip 2
+      state: 'off'
+      supported_features: 61
+    switch.tv_beleuchtung:
+      friendly_name: TV Beleuchtung
+      state: 'off'
+  icon: mdi:lamp
+

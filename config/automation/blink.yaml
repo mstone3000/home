@@ -1,0 +1,39 @@
+- id: save_blink_video_on_motion
+  alias: "Save Blink Video on Motion"
+  trigger:
+    platform: state
+    entity_id: binary_sensor.blink_851_520_441_motion_detected
+    to: "on"
+  action:
+    - service: input_text.set_value
+      target:
+        entity_id: input_text.blink_timestamp
+      data:
+        value: "{{ now().strftime('%Y%m%d_%H%M%S') }}"
+    - service: camera.snapshot
+      target:
+        entity_id: camera.blink_851_520_441
+      data:
+        filename: /media/webcam/blink/snapshot/snapshot_{{ states('input_text.blink_timestamp') }}.jpg
+    - service: blink.save_video
+      data:
+        name: DachCam
+        filename: "/media/webcam/blink/video/blink_video_{{ states('input_text.blink_timestamp') }}.mp4"
+    - service: notify.manuel
+      data:
+        title: Dach Bewegung
+        message: Dach Bewegung
+        data:
+          photo:
+            - file: /media/webcam/blink/snapshot/snapshot_{{ states('input_text.blink_timestamp') }}.jpg
+              caption: Dach Bewegung
+    - delay:
+           seconds: 100
+    - service: notify.manuel
+      data:
+        title: Dach Bewegung
+        message: Dach Bewegung
+        data:
+          video:
+            - file: "/media/webcam/blink/video/snapshot_{{ states('input_text.blink_timestamp') }}.mp4"
+              caption: Dach Bewegung

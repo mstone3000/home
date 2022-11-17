@@ -1,0 +1,97 @@
+- name: "HassBridge"
+  entity_config:
+    light.eingang:
+      name: light_eingang
+    climate.bad:
+      name: Bad Thermostat
+    climate.wohnzimmer:
+      name: Wohnzimmer Thermostat
+    climate.kueche:
+      name: Kueche Thermostat
+    climate.schlafzimmer:
+      name: Schlafzimmer Thermostat
+  filter:
+    include_entities:
+      - light.bad_deckenlampe
+      - light.bad_hue_bloom
+      - light.spiegel_licht
+      - light.klo_lampe
+      - light.eingang
+      # #- light.wohnzimmer_tisch_lampe
+      - light.hue_iris_1
+      - light.hue_play_gradient_lightstrip_1
+      - light.stiegen_led
+      - light.couch
+      - light.esstisch
+      - light.kueche_licht
+      - light.kuchenlampe
+      - light.kuche_unterboden
+      - light.dach_hue_go
+      - light.schlafzimmer_licht
+      - light.hue_color_lamp_1
+      - light.office_lampe_level_light_color_on_off
+      - light.bildschirm_lampe
+      - light.color_light_1
+      - light.bildschirm_lampe
+      - light.balkon_licht
+      
+      - climate.bad
+      - climate.wohnzimmer
+      - climate.kueche
+      - climate.schlafzimmer
+      - climate.office
+
+      #- input_boolean.automations
+      - input_boolean.eve_aqua
+      - input_boolean.kinomodus
+      - input_select.tvchannel
+      - switch.vacuum
+
+      - cover.wohnzimmer_curtain_left
+      - cover.wohnzimmer_curtain_right
+
+      - sensor.dach_zwave_temperatur # Dach Temp Sensor
+      - sensor.4_in_one_multisensor_g5_humidity
+      - sensor.netatmo_innsbruck_innen_humidity
+
+      - light.lightautomations
+      - switch.guest_wifi
+
+      - switch.couch_strom # couch
+      - switch.tradfri_outlet_3 # ladegerät kasten
+      - switch.office_computer_on_off
+      - switch.tradfri_outlet_6 #zahnbürste
+
+      #- switch.mss620_acf0_outlet # Balkon 1
+      #- switch.mss620_acf0_outlet_2
+
+      - binary_sensor.bad_sensor_occupancy
+      - binary_sensor.wohnzimmer_sensor_occupancy
+      - binary_sensor.office_sensor_occupancy
+      - binary_sensor.kuche_sensor_occupancy
+      - binary_sensor.eingang_motion_sensor
+      - binary_sensor.terasse_sensor_occupancy
+      - binary_sensor.balkon_sensor_occupancy
+      - binary_sensor.zw074_multisensor_gen5_home_security_motion_detected
+
+      - script.esstisch_saugen
+      - script.kueche_saugen
+      - script.wohnzimmer_saugen
+      - script.sauger_ausleeren
+      - script.bad_u_schlafzimmer_saugen
+      - script.schlafzimmer_saugen
+      - switch.klimaanlage
+
+      - binary_sensor.0x00158d00054d1dbf_contact # wohnzimmer fenster
+      - binary_sensor.0x00158d00044e9949_contact # schlafzi fenster
+      - binary_sensor.0x00158d0002a1e262_contact # office fenster
+      - binary_sensor.0x00158d00054d9ecf_contact # dach fenster
+
+
+- name: Alarm Panel
+  mode: accessory
+  pincode: 5412
+  port: 51831
+  filter:
+    include_entities:
+      - alarm_control_panel.alarm

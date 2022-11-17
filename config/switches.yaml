@@ -1,0 +1,93 @@
+- platform: template
+  switches:
+    vacuum:
+      value_template: "off"
+      turn_on:
+        service: vacuum.start
+        data:
+          entity_id: vacuum.s6_maxv
+      turn_off:
+        service: vacuum.return_to_base
+        data:
+          entity_id: vacuum.s6_maxv
+
+- platform: command_line
+  switches:
+    nightvision_pflanzis:
+      command_on: !secret nightvision_pflanzis_on
+      command_state: !secret nightvision_pflanzis_state
+      command_off: !secret nightvision_pflanzis_off
+      value_template: '{{ value == "0" }}'
+
+- platform: command_line
+  scan_interval: 300
+  switches:
+    guest_wifi:
+      command_on: /config/wifi.sh gueston
+      command_state: /config/wifi.sh gueststatus
+      command_off:  /config/wifi.sh guestoff
+      value_template: '{{ value == "0" }}'
+
+- platform: command_line
+  switches:
+    reboot_sunshine:
+      command_on: !secret reboot_sunshine
+
+- platform: command_line
+  switches:
+    reboot_fritzbox:
+      command_on: /config/rebootfritz.sh
+
+- platform: command_line
+  switches:
+    reboot:
+      command_on: !secret reboot
+      friendly_name: reboot
+
+- platform: command_line
+  switches:
+    reboot_pivpn:
+      command_on: !secret reboot_pivpn
+      friendly_name: reboot
+
+- platform: command_line
+  switches:
+    huesync:
+      command_on: !secret huesync_on
+      friendly_name: huesync
+      command_off: !secret huesync_off
+      command_state: !secret huesync_state
+      value_template: '{{ value == "true" }}'
+      command_timeout: 30
+
+- platform: command_line
+  switches:
+    piccap:
+      command_on: !secret piccap_on
+      friendly_name: piccap
+      command_off: !secret piccap_off
+      command_state: !secret piccap_state
+      value_template: '{{ value == "true" }}'
+      command_timeout: 30
+
+- platform: command_line
+  switches:
+    eingang_motion_scrypted:
+      command_on: !secret eingang_motion_scrypted_on
+      friendly_name: eingang_motion_scrypted
+      command_off: !secret eingang_motion_scrypted_off 
+      command_state: !secret eingang_motion_scrypted_state
+      value_template: '{{ value == "true" }}'
+
+- platform: command_line
+  switches:
+    updateha:
+      command_on: !secret updateha
+      command_timeout: 900
+
+- platform: command_line
+  switches:
+    restart_wifi: 
+      command_on: /config/wifi.sh restart
+      command_timeout: 30
+

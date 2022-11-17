@@ -1,0 +1,72 @@
+heating_automations:
+  name: Heating Automations
+  entities:
+    - automation.wohnzimmer_heizung_ein
+    - automation.kueche_heizung_ein
+    - automation.bad_heizung_ein
+    - automation.wohnzimmer_heizung_aus
+    - automation.kueche_heizung_aus
+    - automation.bad_heizung_aus
+
+heating_automations_switches:
+  name: Heating Automations
+  entities:
+    - automation.wohnzimmer_heizung_ein
+    - automation.kueche_heizung_ein
+    - automation.bad_heizung_ein
+    - automation.wohnzimmer_heizung_aus
+    - automation.kueche_heizung_aus
+    - automation.bad_heizung_aus
+    - climate.kueche
+    - climate.bad
+    - climate.wohnzimmer
+
+wohnzimmer_licht_group:
+  name: Wohnzimmer Licht Group
+  entities:
+    - light.hue_iris_1
+    - light.stiegen_led
+    - light.couch
+    - light.hue_play_gradient_lightstrip_1
+
+kueche_licht_group:
+  name: Küche Licht Group
+  entities:
+    - light.kuchenlampe
+    - light.kueche_licht
+    - light.kuche_unterboden
+    - light.esstisch
+
+bad_licht_group:
+  name: Bad Licht Group
+  entities:
+    - light.bad_deckenlampe
+    - light.bad_hue_bloom
+    - light.spiegel_licht
+    - light.klo_lampe
+
+dach_licht_group:
+  name: Dach Licht Group
+  entities:
+    - light.dach_hue_go
+
+light_automations:
+  name: Licht Automationen
+  entities:
+    - automation.bad_bewegung
+    - automation.dach_bewegung
+    - automation.eingang_bewegung_nacht
+    - automation.eingang_bewegung_tag
+    - automation.klo_bewegung
+    - automation.kuche_bewegung
+    - automation.schlafzimmer_bewegung
+    - automation.speisezimmer_bewegung
+    - automation.wohnzimmer_1_bewegung
+    - automation.office_bewegung
+    - automation.office_bewegung_2
+
+vacuum_automations:
+  name: Sauger Automationen
+  entities:
+    - automation.vacuum_battery_full_turn_on_when_not_home
+    - automation.vacuum_return_when_coming_home
